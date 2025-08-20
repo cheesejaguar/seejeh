@@ -11,7 +11,8 @@ import {
   invokeBlockadeIfAny,
   hasAnyLegalMove,
   isCenter,
-  countStones
+  countStones,
+  previewCaptures
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
 import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves } from '../lib/ai';
@@ -31,6 +32,10 @@ interface GameStore {
   toastMessage: string | null;
   blockadeRemovalMode: boolean;
   aiThinking: boolean;
+  
+  // Preview state
+  hoveredMove: Cell | null;
+  previewCaptures: Cell[];
   
   // Hint system
   showHints: boolean;
@@ -57,6 +62,10 @@ interface GameStore {
   toggleHints: () => void;
   getHint: () => void;
   clearHints: () => void;
+  
+  // Preview actions
+  setHoveredMove: (cell: Cell | null) => void;
+  updatePreviewCaptures: () => void;
   
   // UI actions
   setLanguage: (language: Language) => void;
@@ -106,6 +115,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   blockadeRemovalMode: false,
   aiThinking: false,
   
+  // Preview state
+  hoveredMove: null,
+  previewCaptures: [],
+  
   // Hint system
   showHints: false,
   currentHint: null,
@@ -128,7 +141,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       aiThinking: false,
       showHints: false,
       currentHint: null,
-      topMoves: []
+      topMoves: [],
+      previewCaptures: [],
+      hoveredMove: null
     });
     saveGameState(newState);
     
@@ -149,7 +164,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         gameState: saved, 
         selectedCell: null,
         blockadeRemovalMode: !hasAnyLegalMove(saved, saved.current),
-        aiThinking: false
+        aiThinking: false,
+        previewCaptures: [],
+        hoveredMove: null
       });
       
       // Check if it's AI's turn after loading
@@ -181,7 +198,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     // If cell has current player's stone, select it
     if (gameState.board[cell.r][cell.c] === gameState.current) {
-      set({ selectedCell: cell });
+      set({ 
+        selectedCell: cell,
+        previewCaptures: [], // Clear preview when selecting a new piece
+        hoveredMove: null
+      });
       soundSystem.play('select');
       return;
     }
@@ -193,8 +214,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       } else {
         get().moveStone(selectedCell, cell);
       }
-      // Clear hints after move
+      // Clear hints and preview after move
       get().clearHints();
+      set({ 
+        previewCaptures: [], 
+        hoveredMove: null 
+      });
     }
   },
 
@@ -559,6 +584,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       currentHint: null,
       topMoves: []
     });
+  },
+
+  setHoveredMove: (cell: Cell | null) => {
+    set({ hoveredMove: cell });
+    if (cell) {
+      get().updatePreviewCaptures();
+    } else {
+      set({ previewCaptures: [] });
+    }
+  },
+
+  updatePreviewCaptures: () => {
+    const { gameState, selectedCell, hoveredMove } = get();
+    
+    if (!selectedCell || !hoveredMove || gameState.phase === 'placement') {
+      set({ previewCaptures: [] });
+      return;
+    }
+    
+    const capturedCells = previewCaptures(gameState, selectedCell, hoveredMove);
+    set({ previewCaptures: capturedCells });
   },
 
   setLanguage: (language: Language) => {

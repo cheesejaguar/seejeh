@@ -56,6 +56,11 @@
 - **Why**: Transforms gameplay into an educational experience that builds mastery over time
 - **Success Criteria**: Players demonstrably improve their strategic thinking through hint system and AI interactions
 
+### Visual Capture Preview System
+- **What**: Real-time preview of stones that would be captured when hovering over possible moves, with distinct visual indicators and animations
+- **Why**: Helps players understand capture mechanics and evaluate move consequences before committing
+- **Success Criteria**: Clear, non-intrusive visual feedback that enhances tactical decision-making without cluttering the interface
+
 ### Performance Analytics
 - **What**: Detailed breakdown of performance by AI difficulty, favorite color preference, move efficiency analysis, and improvement trends
 - **Why**: Helps players understand their playing style and identify areas for improvement
@@ -77,9 +82,10 @@
 ### Color Strategy
 **Color Scheme Type**: Existing triadic scheme with subtle AI indicators
 **Primary Color**: Deep amber (maintaining existing palette)
-**Secondary Colors**: Sage green for AI moves, copper red for captures
-**Accent Color**: Gentle blue for AI thinking indicators
+**Secondary Colors**: Sage green for AI moves, copper red for captures and capture previews
+**Accent Color**: Gentle blue for AI thinking indicators  
 **AI Visual Language**: Soft animated indicators that don't distract from board state
+**Capture Preview Colors**: Destructive red with fade animation for stones that would be captured, cross symbols for clear identification
 
 ### Typography System
 **Existing fonts maintained**: Cairo for Arabic, Inter for Latin
@@ -91,6 +97,7 @@
 **Difficulty Selector**: Radio buttons with descriptive labels
 **AI Status**: Minimal progress indicators during move calculation
 **Mode Toggle**: Clear switch between Human vs Human and Human vs AI
+**Capture Preview System**: Hover-based visual feedback using pulsing animations and clear color coding to show potential captures
 
 ## Implementation Considerations
 

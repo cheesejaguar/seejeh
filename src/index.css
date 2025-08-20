@@ -191,6 +191,24 @@
   animation: hint-glow 2s infinite;
 }
 
+.seejeh-cell.capture-preview {
+  background: var(--destructive);
+  opacity: 0.9;
+  animation: capture-preview-pulse 1.5s infinite;
+}
+
+.seejeh-cell.capture-preview::after {
+  content: '✗';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  color: var(--destructive-foreground);
+  font-size: 1rem;
+  font-weight: bold;
+  opacity: 0.8;
+}
+
 @keyframes pulse {
   0%, 100% { opacity: 0.8; }
   50% { opacity: 0.6; }
@@ -226,6 +244,17 @@
 @keyframes hint-glow {
   0%, 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
   50% { box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.3); }
+}
+
+@keyframes capture-preview-pulse {
+  0%, 100% { 
+    background: var(--destructive);
+    box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.5);
+  }
+  50% { 
+    background: var(--destructive);
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3);
+  }
 }
 
 .seejeh-stone {
@@ -265,6 +294,12 @@
   animation: movable-glow 2s infinite;
 }
 
+.seejeh-stone.capture-preview {
+  opacity: 0.6;
+  animation: capture-stone-fade 1.5s infinite;
+  border: 2px solid var(--destructive);
+}
+
 @keyframes movable-glow {
   0%, 100% { 
     border-color: var(--primary);
@@ -273,6 +308,17 @@
   50% { 
     border-color: var(--accent);
     box-shadow: 0 0 8px rgba(96, 165, 250, 0.3);
+  }
+}
+
+@keyframes capture-stone-fade {
+  0%, 100% { 
+    opacity: 0.6;
+    border-color: var(--destructive);
+  }
+  50% { 
+    opacity: 0.3;
+    border-color: var(--destructive);
   }
 }
 
@@ -305,8 +351,19 @@
     animation: none;
   }
   
+  .seejeh-cell.capture-preview {
+    animation: none;
+    background: var(--destructive);
+  }
+  
   .seejeh-stone.movable {
     animation: none;
     border: 2px solid var(--primary);
+  }
+  
+  .seejeh-stone.capture-preview {
+    animation: none;
+    opacity: 0.5;
+    border: 2px solid var(--destructive);
   }
 }

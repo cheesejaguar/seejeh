@@ -13,11 +13,22 @@ export function Board() {
     selectedCell,
     selectCell,
     blockadeRemovalMode,
-    showHints
+    showHints,
+    hoveredMove,
+    previewCaptures,
+    setHoveredMove
   } = useGameStore();
   
   const handleCellClick = (cell: CellType) => {
     selectCell(cell);
+  };
+  
+  const handleCellHover = (cell: CellType | null) => {
+    setHoveredMove(cell);
+  };
+  
+  const isWouldBeCaptured = (cell: CellType): boolean => {
+    return previewCaptures.some(capture => capture.r === cell.r && capture.c === cell.c);
   };
   
   const getValidMoves = (): CellType[] => {
@@ -81,7 +92,9 @@ export function Board() {
                 isValidPlacement={isValidPlacement(cell)}
                 isValidPieceMove={isValidPieceMove(cell)}
                 isMovablePiece={isMovablePiece(cell)}
+                isWouldBeCaptured={isWouldBeCaptured(cell)}
                 onClick={handleCellClick}
+                onHover={handleCellHover}
                 className={isRemovableInBlockade(cell) ? 'removable' : ''}
               />
               {showHints && <HintOverlay cell={cell} />}

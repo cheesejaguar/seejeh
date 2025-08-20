@@ -321,6 +321,54 @@ export function resolveCaptures(state: GameState, movedTo: Cell): CaptureResult 
 }
 
 /**
+ * Preview what stones would be captured if a piece moved to a destination
+ * This is used for visual feedback without actually modifying the game state
+ */
+export function previewCaptures(state: GameState, from: Cell, to: Cell): Cell[] {
+  // Validate the move is legal first
+  const validMoves = movesFor(state, from);
+  const isValidMove = validMoves.some(move => move.r === to.r && move.c === to.c);
+  if (!isValidMove) return [];
+  
+  const player = state.board[from.r][from.c];
+  if (!player) return [];
+  
+  const opponent = player === 'Light' ? 'Dark' : 'Light';
+  const captured: Cell[] = [];
+  
+  // Check all four orthogonal directions from the destination
+  const directions = [
+    { r: -1, c: 0 }, // up
+    { r: 1, c: 0 },  // down
+    { r: 0, c: -1 }, // left
+    { r: 0, c: 1 }   // right
+  ];
+  
+  for (const dir of directions) {
+    const line: Cell[] = [];
+    let pos = { r: to.r + dir.r, c: to.c + dir.c };
+    
+    // Collect contiguous opponent stones in this direction
+    while (inBounds(pos) && state.board[pos.r][pos.c] === opponent) {
+      // Center cell cannot be captured
+      if (!isCenter(pos)) {
+        line.push({ ...pos });
+      }
+      pos = { r: pos.r + dir.r, c: pos.c + dir.c };
+    }
+    
+    // Check if line is bounded by friendly stone
+    if (line.length > 0 && 
+        inBounds(pos) && 
+        state.board[pos.r][pos.c] === player) {
+      captured.push(...line);
+    }
+  }
+  
+  return captured;
+}
+
+/**
  * Check if player has any legal moves
  */
 export function hasAnyLegalMove(state: GameState, player: Player): boolean {
