@@ -4,21 +4,36 @@ import { Controls } from './components/Controls';
 import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { AboutModal } from './components/AboutModal';
 import { SettingsModal } from './components/SettingsModal';
+import { ProfileModal } from './components/ProfileModal';
+import { LoginPrompt } from './components/LoginPrompt';
 import { Toast } from './components/Toast';
 import { Button } from './components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { useGameStore } from './state/gameStore';
+import { useAuthStore } from './state/authStore';
 import { useTranslation } from './hooks/useTranslation';
-import { Info } from '@phosphor-icons/react';
+import { Info, User } from '@phosphor-icons/react';
 
 function App() {
   const { 
     settings, 
     loadSavedGame, 
     setShowAbout,
+    setShowProfile,
+    showProfile,
     setLanguage 
   } = useGameStore();
   
+  const { 
+    isAuthenticated, 
+    user, 
+    login, 
+    isLoading: authLoading 
+  } = useAuthStore();
+  
   const { t } = useTranslation();
+  
+  const [guestMode, setGuestMode] = React.useState(false);
   
   useEffect(() => {
     // Set initial document attributes
@@ -27,7 +42,21 @@ function App() {
     
     // Load saved game on startup
     loadSavedGame();
-  }, [settings.language, loadSavedGame]);
+    
+    // Check if guest mode is enabled
+    const isGuestMode = localStorage.getItem('guestMode') === 'true';
+    setGuestMode(isGuestMode);
+    
+    // Try to authenticate automatically if not in guest mode
+    if (!isGuestMode) {
+      login();
+    }
+  }, [settings.language, loadSavedGame, login]);
+  
+  // Show login prompt if not authenticated and not loading and not in guest mode
+  if (!isAuthenticated && !authLoading && !guestMode) {
+    return <LoginPrompt />;
+  }
   
   return (
     <div className="min-h-screen bg-background p-4">
@@ -53,6 +82,35 @@ function App() {
                 <Info size={16} className="mr-2" />
                 {t('about')}
               </Button>
+              
+              {isAuthenticated && user ? (
+                <Button
+                  onClick={() => setShowProfile(true)}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src={user.avatar_url} alt={user.login} />
+                    <AvatarFallback>{user.login[0].toUpperCase()}</AvatarFallback>
+                  </Avatar>
+                  <span className="hidden sm:inline">{user.login}</span>
+                </Button>
+              ) : guestMode ? (
+                <Button
+                  onClick={() => {
+                    localStorage.removeItem('guestMode');
+                    login();
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-2"
+                >
+                  <User size={16} />
+                  {t('auth.loginButton')}
+                </Button>
+              ) : null}
+              
               <LanguageSwitcher />
             </div>
           </div>
@@ -84,6 +142,10 @@ function App() {
       {/* Modals */}
       <AboutModal />
       <SettingsModal />
+      <ProfileModal 
+        open={showProfile} 
+        onOpenChange={setShowProfile} 
+      />
       
       {/* Toast Notifications */}
       <Toast />

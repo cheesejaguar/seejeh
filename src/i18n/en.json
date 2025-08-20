@@ -92,5 +92,58 @@
     "centerCell": "Center cell (safe)",
     "selectedCell": "Selected cell",
     "validMove": "Valid move destination"
+  },
+  "auth": {
+    "loginTitle": "Connect with GitHub",
+    "loginDescription": "Sign in with your GitHub account to track your progress and unlock advanced features.",
+    "loginButton": "Sign In with GitHub",
+    "loggingIn": "Signing in...",
+    "playAsGuest": "Continue as Guest",
+    "logout": "Sign Out",
+    "featureStats": "Track detailed game statistics",
+    "featureHistory": "View complete match history",
+    "featureProgress": "Monitor your improvement over time"
+  },
+  "profile": {
+    "userProfile": "User Profile",
+    "profile": "Profile",
+    "history": "History",
+    "totalGames": "Total Games",
+    "winRate": "Win Rate",
+    "winStreak": "Win Streak",
+    "avgDuration": "Avg Duration",
+    "detailedStats": "Detailed Statistics",
+    "gameResults": "Game Results",
+    "wins": "Wins",
+    "draws": "Draws", 
+    "losses": "Losses",
+    "bestStreak": "Best Streak",
+    "preferences": "Preferences",
+    "favoriteColor": "Favorite Color",
+    "avgMoves": "Avg Moves",
+    "difficultyStats": "Performance by Difficulty",
+    "games": "games",
+    "dataManagement": "Data Management",
+    "dataWarning": "This will permanently delete all your game history and statistics.",
+    "clearAllData": "Clear All Data",
+    "clearing": "Clearing..."
+  },
+  "history": {
+    "gameHistory": "Game History",
+    "noGamesYet": "No games played yet",
+    "playFirstGame": "Play your first game to see it here!",
+    "recentGamesDescription": "Your last {{count}} games",
+    "won": "Won",
+    "lost": "Lost",
+    "draw": "Draw",
+    "today": "Today",
+    "yesterday": "Yesterday", 
+    "daysAgo": "days ago",
+    "showingRecent": "Showing recent games",
+    "totalGamesPlayed": "{{total}} total games played"
+  },
+  "colors": {
+    "light": "Light",
+    "dark": "Dark"
   }
 }

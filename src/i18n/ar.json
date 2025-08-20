@@ -92,5 +92,58 @@
     "centerCell": "الخانة المركزية (آمنة)",
     "selectedCell": "خانة مختارة",
     "validMove": "وجهة حركة صحيحة"
+  },
+  "auth": {
+    "loginTitle": "الاتصال مع GitHub",
+    "loginDescription": "سجل الدخول بحساب GitHub الخاص بك لتتبع تقدمك وفتح الميزات المتقدمة.",
+    "loginButton": "تسجيل الدخول بـ GitHub",
+    "loggingIn": "جارٍ تسجيل الدخول...",
+    "playAsGuest": "المتابعة كضيف",
+    "logout": "تسجيل الخروج",
+    "featureStats": "تتبع إحصائيات اللعبة التفصيلية",
+    "featureHistory": "عرض تاريخ المباريات الكامل",
+    "featureProgress": "مراقبة تحسنك مع الوقت"
+  },
+  "profile": {
+    "userProfile": "الملف الشخصي للمستخدم",
+    "profile": "الملف الشخصي",
+    "history": "التاريخ",
+    "totalGames": "إجمالي الألعاب",
+    "winRate": "معدل الفوز",
+    "winStreak": "سلسلة الانتصارات",
+    "avgDuration": "متوسط المدة",
+    "detailedStats": "الإحصائيات التفصيلية",
+    "gameResults": "نتائج الألعاب",
+    "wins": "الانتصارات",
+    "draws": "التعادل",
+    "losses": "الهزائم",
+    "bestStreak": "أفضل سلسلة",
+    "preferences": "التفضيلات",
+    "favoriteColor": "اللون المفضل",
+    "avgMoves": "متوسط الحركات",
+    "difficultyStats": "الأداء حسب الصعوبة",
+    "games": "ألعاب",
+    "dataManagement": "إدارة البيانات",
+    "dataWarning": "سيؤدي هذا إلى حذف جميع تاريخ ألعابك وإحصائياتك نهائياً.",
+    "clearAllData": "مسح جميع البيانات",
+    "clearing": "جارٍ المسح..."
+  },
+  "history": {
+    "gameHistory": "تاريخ الألعاب",
+    "noGamesYet": "لم تلعب أي ألعاب بعد",
+    "playFirstGame": "العب لعبتك الأولى لرؤيتها هنا!",
+    "recentGamesDescription": "آخر {{count}} ألعاب لك",
+    "won": "فوز",
+    "lost": "هزيمة",
+    "draw": "تعادل",
+    "today": "اليوم",
+    "yesterday": "أمس",
+    "daysAgo": "أيام مضت",
+    "showingRecent": "عرض الألعاب الأخيرة",
+    "totalGamesPlayed": "{{total}} لعبة إجمالية"
+  },
+  "colors": {
+    "light": "الفاتح",
+    "dark": "الغامق"
   }
 }

@@ -1,7 +1,7 @@
 // FILE: src/state/gameStore.ts
 
 import { create } from 'zustand';
-import { GameState, Language, GameSettings, Cell, Player, AIDifficulty } from '../lib/types';
+import { GameState, Language, GameSettings, Cell, Player, AIDifficulty, GameSession, GameResult } from '../lib/types';
 import { 
   initialState7x7, 
   applyPlacement, 
@@ -10,7 +10,8 @@ import {
   endChain,
   invokeBlockadeIfAny,
   hasAnyLegalMove,
-  isCenter
+  isCenter,
+  countStones
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
 import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves } from '../lib/ai';
@@ -19,11 +20,13 @@ interface GameStore {
   // Game state
   gameState: GameState;
   selectedCell: Cell | null;
+  currentSession: GameSession | null;
   
   // UI state
   settings: GameSettings;
   showAbout: boolean;
   showSettings: boolean;
+  showProfile: boolean;
   toastMessage: string | null;
   blockadeRemovalMode: boolean;
   aiThinking: boolean;
@@ -59,8 +62,14 @@ interface GameStore {
   toggleVariant: (variant: keyof GameSettings['variant']) => void;
   setShowAbout: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
+  setShowProfile: (show: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
+  
+  // Game session tracking
+  startGameSession: () => void;
+  endGameSession: () => Promise<void>;
+}
 }
 
 const defaultSettings: GameSettings = {
@@ -81,9 +90,11 @@ const defaultSettings: GameSettings = {
 export const useGameStore = create<GameStore>((set, get) => ({
   gameState: initialState7x7(),
   selectedCell: null,
+  currentSession: null,
   settings: loadSettings() || defaultSettings,
   showAbout: false,
   showSettings: false,
+  showProfile: false,
   toastMessage: null,
   blockadeRemovalMode: false,
   aiThinking: false,
@@ -95,7 +106,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
   hintsEnabled: (loadSettings() || defaultSettings).hintsEnabled,
 
   newGame: () => {
-    const { settings } = get();
+    const { settings, endGameSession } = get();
+    
+    // End current session if any
+    if (get().currentSession) {
+      endGameSession();
+    }
+    
     const newState = initialState7x7(settings.variant);
     set({ 
       gameState: newState, 
@@ -107,6 +124,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       topMoves: []
     });
     saveGameState(newState);
+    
+    // Start new session
+    get().startGameSession();
     
     // Check if AI should move first
     setTimeout(() => get().checkForAITurn(), 100);
@@ -214,10 +234,20 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   moveStone: (from: Cell, to: Cell) => {
-    const { gameState } = get();
+    const { gameState, currentSession } = get();
     
     try {
       const newState = applyMove(gameState, from, to);
+      
+      // Update session move count
+      if (currentSession) {
+        set({
+          currentSession: {
+            ...currentSession,
+            moves: currentSession.moves + 1
+          }
+        });
+      }
       
       // Check for blockade after turn change
       const needsBlockadeResolution = !hasAnyLegalMove(newState, newState.current);
@@ -233,6 +263,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         get().showToast(`Captured ${newState.capturedLastMove.length} stones`);
       }
       
+      // Check if game ended and end session
+      if (newState.winner) {
+        setTimeout(() => get().endGameSession(), 1000);
+      }
+      
       // Check for AI turn after human move
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
@@ -241,10 +276,21 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   chainStep: (to: Cell) => {
-    const { gameState } = get();
+    const { gameState, currentSession } = get();
     
     try {
       const newState = applyChainStep(gameState, to);
+      
+      // Update session move count
+      if (currentSession) {
+        set({
+          currentSession: {
+            ...currentSession,
+            moves: currentSession.moves + 1
+          }
+        });
+      }
+      
       set({ gameState: newState, selectedCell: newState.chainOrigin || null });
       saveGameState(newState);
       
@@ -272,6 +318,11 @@ export const useGameStore = create<GameStore>((set, get) => ({
         blockadeRemovalMode: needsBlockadeResolution && !newState.winner
       });
       saveGameState(newState);
+      
+      // Check if game ended and end session
+      if (newState.winner) {
+        setTimeout(() => get().endGameSession(), 1000);
+      }
       
       // Check for AI turn after chain end
       setTimeout(() => get().checkForAITurn(), 300);
@@ -438,11 +489,61 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   setShowAbout: (show: boolean) => set({ showAbout: show }),
   setShowSettings: (show: boolean) => set({ showSettings: show }),
+  setShowProfile: (show: boolean) => set({ showProfile: show }),
   
   showToast: (message: string) => {
     set({ toastMessage: message });
     setTimeout(() => set({ toastMessage: null }), 3000);
   },
   
-  clearToast: () => set({ toastMessage: null })
+  clearToast: () => set({ toastMessage: null }),
+  
+  startGameSession: () => {
+    const session: GameSession = {
+      startTime: Date.now(),
+      moves: 0
+    };
+    set({ currentSession: session });
+  },
+  
+  endGameSession: async () => {
+    const { currentSession, gameState, settings } = get();
+    if (!currentSession) return;
+    
+    const endTime = Date.now();
+    const duration = Math.floor((endTime - currentSession.startTime) / 1000);
+    
+    // Only save completed games (with a winner or explicit end)
+    if (gameState.winner || duration > 30) { // At least 30 seconds played
+      const gameResult: GameResult = {
+        id: `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: currentSession.startTime,
+        winner: gameState.winner || null,
+        opponent: 'AI',
+        aiDifficulty: settings.aiDifficulty,
+        duration,
+        totalMoves: gameState.moveHistory.length,
+        playerColor: 'Light', // Human is always Light in current setup
+        finalScore: {
+          light: countStones(gameState, 'Light'),
+          dark: countStones(gameState, 'Dark')
+        },
+        variant: gameState.variant
+      };
+      
+      // Save to auth store if user is logged in
+      try {
+        // Import dynamically to avoid circular dependency
+        const { useAuthStore } = await import('./authStore');
+        const authStore = useAuthStore.getState();
+        if (authStore.isAuthenticated) {
+          await authStore.addGameResult(gameResult);
+        }
+      } catch (error) {
+        console.error('Failed to save game result:', error);
+      }
+    }
+    
+    set({ currentSession: null });
+  }
 }));

@@ -48,6 +48,61 @@ export interface PlayerConfig {
   difficulty?: AIDifficulty;
 }
 
+// GitHub User Types
+export interface GitHubUser {
+  id: number;
+  login: string;
+  avatar_url: string;
+  email?: string;
+  name?: string;
+}
+
+// Match History Types
+export interface GameResult {
+  id: string;
+  timestamp: number;
+  winner: Player | null; // null for draws
+  opponent: 'AI' | 'Guest'; // Since we're AI-only now
+  aiDifficulty?: AIDifficulty;
+  duration: number; // in seconds
+  totalMoves: number;
+  playerColor: Player;
+  finalScore: {
+    light: number;
+    dark: number;
+  };
+  variant: VariantFlags;
+}
+
+// User Stats Types
+export interface PlayerStats {
+  totalGames: number;
+  wins: number;
+  draws: number;
+  losses: number;
+  winRate: number;
+  averageGameDuration: number;
+  averageMovesPerGame: number;
+  bestWinStreak: number;
+  currentWinStreak: number;
+  favoriteColor: Player;
+  difficultyStats: Record<AIDifficulty, {
+    games: number;
+    wins: number;
+    winRate: number;
+  }>;
+  recentGames: GameResult[];
+}
+
+// Auth State
+export interface AuthState {
+  isAuthenticated: boolean;
+  user: GitHubUser | null;
+  stats: PlayerStats | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
 export interface GameSettings {
   language: Language;
   variant: VariantFlags;
@@ -57,4 +112,10 @@ export interface GameSettings {
     Dark: PlayerConfig;
   };
   hintsEnabled: boolean;
+}
+
+export interface GameSession {
+  startTime: number;
+  endTime?: number;
+  moves: number;
 }
