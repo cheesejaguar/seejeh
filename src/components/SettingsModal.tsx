@@ -15,8 +15,8 @@ import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useGameStore } from '../state/gameStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { X, Robot, Users } from '@phosphor-icons/react';
-import { GameMode, AIDifficulty } from '../lib/types';
+import { X, Robot } from '@phosphor-icons/react';
+import { AIDifficulty } from '../lib/types';
 
 export function SettingsModal() {
   const { 
@@ -24,7 +24,6 @@ export function SettingsModal() {
     setShowSettings, 
     settings, 
     toggleVariant,
-    setGameMode,
     setAIDifficulty
   } = useGameStore();
   
@@ -51,61 +50,43 @@ export function SettingsModal() {
             <LanguageSwitcher />
           </div>
           
-          {/* Game Mode */}
+          {/* AI Difficulty */}
           <div className="space-y-3">
-            <Label className="text-sm font-medium">{t('gameMode')}</Label>
+            <Label className="text-sm font-medium flex items-center gap-2">
+              <Robot size={16} className="text-primary" />
+              {t('difficulty')}
+            </Label>
             <RadioGroup
-              value={settings.gameMode}
-              onValueChange={(value: GameMode) => setGameMode(value)}
+              value={settings.aiDifficulty}
+              onValueChange={(value: AIDifficulty) => setAIDifficulty(value)}
               className="space-y-2"
             >
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="human-vs-human" id="mode-human" />
-                <Label htmlFor="mode-human" className="flex items-center gap-2 text-sm">
-                  <Users size={16} />
-                  {t('mode.human-vs-human')}
+                <RadioGroupItem value="beginner" id="diff-beginner" />
+                <Label htmlFor="diff-beginner" className="text-sm">
+                  {t('aiDifficulty.beginner')}
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="human-vs-ai" id="mode-ai" />
-                <Label htmlFor="mode-ai" className="flex items-center gap-2 text-sm">
-                  <Robot size={16} />
-                  {t('mode.human-vs-ai')}
+                <RadioGroupItem value="easy" id="diff-easy" />
+                <Label htmlFor="diff-easy" className="text-sm">
+                  {t('aiDifficulty.easy')}
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="medium" id="diff-medium" />
+                <Label htmlFor="diff-medium" className="text-sm">
+                  {t('aiDifficulty.medium')}
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <RadioGroupItem value="hard" id="diff-hard" />
+                <Label htmlFor="diff-hard" className="text-sm">
+                  {t('aiDifficulty.hard')}
                 </Label>
               </div>
             </RadioGroup>
           </div>
-          
-          {/* AI Difficulty */}
-          {settings.gameMode === 'human-vs-ai' && (
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">{t('difficulty')}</Label>
-              <RadioGroup
-                value={settings.aiDifficulty}
-                onValueChange={(value: AIDifficulty) => setAIDifficulty(value)}
-                className="space-y-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="easy" id="diff-easy" />
-                  <Label htmlFor="diff-easy" className="text-sm">
-                    {t('aiDifficulty.easy')}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="medium" id="diff-medium" />
-                  <Label htmlFor="diff-medium" className="text-sm">
-                    {t('aiDifficulty.medium')}
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="hard" id="diff-hard" />
-                  <Label htmlFor="diff-hard" className="text-sm">
-                    {t('aiDifficulty.hard')}
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-          )}
           
           {/* Variant Rules */}
           <div className="space-y-4">

@@ -1,6 +1,6 @@
 {
   "title": "Seejeh",
-  "subtitle": "Traditional 7×7 Board Game",
+  "subtitle": "Challenge AI Opponents in Traditional 7×7 Strategy",
   "newGame": "New Game",
   "settings": "Settings",
   "about": "About",
@@ -23,6 +23,7 @@
     "human-vs-ai": "Human vs AI"
   },
   "aiDifficulty": {
+    "beginner": "Beginner",
     "easy": "Easy",
     "medium": "Medium", 
     "hard": "Hard"
@@ -51,7 +52,7 @@
     "aiMoveError": "AI move failed"
   },
   "about": {
-    "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. The game was played in various forms throughout North Africa and the Middle East, representing one of humanity's oldest strategic games.",
+    "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. This digital version features intelligent AI opponents with adjustable difficulty levels, allowing you to learn and master this traditional strategic game at your own pace.",
     "rules": {
       "title": "Game Rules",
       "placement": "Placement: Players alternate placing 2 stones per turn (48 total)",

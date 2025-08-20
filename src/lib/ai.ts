@@ -31,6 +31,17 @@ interface EvaluationWeights {
 }
 
 const DIFFICULTY_CONFIGS: Record<AIDifficulty, { depth: number; weights: EvaluationWeights }> = {
+  beginner: {
+    depth: 1,
+    weights: {
+      stoneCount: 10,
+      centerControl: 1,
+      mobility: 0.5,
+      captures: 20,
+      positioning: 0.5,
+      safety: 0.5
+    }
+  },
   easy: {
     depth: 2,
     weights: {
@@ -327,6 +338,11 @@ export function getBestAIMove(state: GameState, difficulty: AIDifficulty): AIMov
   
   if (moves.length === 0) {
     return null;
+  }
+  
+  // For beginner difficulty, make many random moves
+  if (difficulty === 'beginner' && Math.random() < 0.6) {
+    return moves[Math.floor(Math.random() * moves.length)];
   }
   
   // For easy difficulty, add some randomness

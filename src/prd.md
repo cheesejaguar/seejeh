@@ -1,16 +1,17 @@
-# Seejeh.com - AI Enhanced 7×7 Traditional Board Game
+# Seejeh.com - AI-Powered 7×7 Traditional Board Game
 
 ## Core Purpose & Success
 
-**Mission Statement**: A polished, mobile-friendly Seejeh 7×7 board game that preserves traditional gameplay while offering challenging AI opponents for solo play.
+**Mission Statement**: A polished, mobile-friendly Seejeh 7×7 board game that preserves traditional gameplay while offering challenging AI opponents for solo strategic practice and learning.
 
 **Success Indicators**: 
 - Players can complete full games against AI opponents of varying skill levels
-- AI provides meaningful challenge without being frustrating 
-- Smooth transition between human vs human and human vs AI modes
+- AI provides meaningful challenge that adapts to player skill level
+- Smooth progression through difficulty levels for skill development
 - Preserved traditional game rules and cultural authenticity
+- Players learn optimal strategies through AI gameplay examples
 
-**Experience Qualities**: Strategic, Authentic, Accessible
+**Experience Qualities**: Strategic, Educational, Accessible
 
 ## Project Classification & Approach
 
@@ -19,33 +20,33 @@
 
 ## Thought Process for Feature Selection
 
-**Core Problem Analysis**: Traditional board games often require two human players, limiting accessibility when playing alone or learning the game.
+**Core Problem Analysis**: Traditional board games require human opponents for strategic play, but AI opponents can provide consistent, educational gameplay that helps players learn optimal strategies and practice at their own pace.
 
-**User Context**: Players want to practice Seejeh strategies, learn the game rules, or enjoy games when no human opponent is available.
+**User Context**: Players want to master Seejeh strategies, understand deep tactical concepts, and enjoy challenging games with an intelligent opponent that adapts to their skill level.
 
-**Critical Path**: Game setup → AI difficulty selection → Strategic gameplay → Victory/learning
+**Critical Path**: Difficulty selection → Strategic gameplay → AI learning → Skill progression
 
 **Key Moments**: 
-1. AI move execution that feels intelligent and challenging
-2. Difficulty progression that teaches without overwhelming
-3. Clear feedback on AI decision-making for learning
+1. AI move execution that demonstrates strategic thinking and teaches optimal play
+2. Difficulty progression that challenges without frustrating, building player skill
+3. Clear visual feedback showing AI reasoning to facilitate learning
 
 ## Essential Features
 
 ### AI Opponent System
-- **What**: Three difficulty levels (Easy, Medium, Hard) with distinct playing styles
-- **Why**: Allows players to learn progressively and enjoy varied strategic challenges
-- **Success Criteria**: Each difficulty level provides appropriate challenge and feels distinct
+- **What**: Four difficulty levels (Beginner, Easy, Medium, Hard) with distinct strategic approaches and playing styles
+- **Why**: Provides progressive learning curve from basic rules to advanced strategic mastery
+- **Success Criteria**: Each difficulty teaches specific aspects of the game while providing appropriate challenge
 
-### Game Mode Selection  
-- **What**: Toggle between Human vs Human and Human vs AI modes
-- **Why**: Preserves existing multiplayer experience while adding AI functionality
-- **Success Criteria**: Seamless switching between modes with clear indicators
+### Strategic Learning Interface
+- **What**: Optional move suggestions and AI reasoning display to help players understand optimal strategies
+- **Why**: Transforms gameplay into an educational experience that builds mastery over time
+- **Success Criteria**: Players demonstrably improve their strategic thinking through AI interactions
 
-### AI Move Visualization
-- **What**: Subtle visual indicators showing AI's last move and brief thinking time
-- **Why**: Provides feedback and maintains game pacing expectations
-- **Success Criteria**: AI moves feel deliberate without being slow
+### Adaptive AI Behavior
+- **What**: AI that adjusts its playing style based on game phase and strategic considerations
+- **Why**: Provides realistic, varied gameplay that teaches different aspects of Seejeh strategy
+- **Success Criteria**: AI moves feel purposeful and educational rather than random or mechanical
 
 ## Design Direction
 
@@ -76,9 +77,15 @@
 ## Implementation Considerations
 
 ### AI Architecture
-- **Minimax Algorithm**: Base decision-making with configurable depth
-- **Evaluation Functions**: Position scoring, stone count, mobility assessment
-- **Difficulty Scaling**: Easy (depth 2, basic evaluation), Medium (depth 3, improved evaluation), Hard (depth 4, advanced positioning)
+- **Minimax Algorithm**: Enhanced decision-making with alpha-beta pruning and configurable depth
+- **Evaluation Functions**: Multi-layered position scoring including stone count, mobility, center control, and strategic positioning
+- **Difficulty Scaling**: 
+  - Beginner (depth 1, basic evaluation, occasional suboptimal moves)
+  - Easy (depth 2, basic evaluation with minor strategic considerations)
+  - Medium (depth 3, improved evaluation with positional awareness)
+  - Hard (depth 4-5, advanced evaluation with opening book and endgame optimization)
+- **Opening Book**: Pre-computed optimal opening moves for higher difficulties
+- **Endgame Tables**: Specialized logic for winning/drawing positions with few pieces
 
 ### Performance Requirements
 - AI moves completed within 1-3 seconds maximum
@@ -86,9 +93,10 @@
 - Smooth integration with existing game flow
 
 ### State Management
-- AI player type tracking in game settings
-- AI difficulty persistence
-- Clear separation of human and AI turn handling
+- Default to Human vs AI mode (no human vs human option)
+- AI difficulty persistence across sessions
+- Game analysis and move history for learning review
+- Optional hint system for human players
 
 ## Edge Cases & Problem Scenarios
 
@@ -99,4 +107,4 @@
 
 ## Reflection
 
-This AI enhancement transforms Seejeh from a purely social game into an accessible learning and practice tool while preserving its traditional strategic depth. The three-tier difficulty system provides natural progression for skill development, making the ancient game more approachable to modern players.
+This AI-focused implementation transforms Seejeh from a traditional two-player game into a sophisticated single-player learning experience. The progressive difficulty system and optional strategic guidance create an educational journey that helps players master this ancient game's deep strategic principles while preserving its cultural authenticity.

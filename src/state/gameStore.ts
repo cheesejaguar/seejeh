@@ -1,7 +1,7 @@
 // FILE: src/state/gameStore.ts
 
 import { create } from 'zustand';
-import { GameState, Language, GameSettings, Cell, Player, GameMode, AIDifficulty } from '../lib/types';
+import { GameState, Language, GameSettings, Cell, Player, AIDifficulty } from '../lib/types';
 import { 
   initialState7x7, 
   applyPlacement, 
@@ -44,7 +44,6 @@ interface GameStore {
   
   // UI actions
   setLanguage: (language: Language) => void;
-  setGameMode: (mode: GameMode) => void;
   setAIDifficulty: (difficulty: AIDifficulty) => void;
   toggleVariant: (variant: keyof GameSettings['variant']) => void;
   setShowAbout: (show: boolean) => void;
@@ -55,11 +54,10 @@ interface GameStore {
 
 const defaultSettings: GameSettings = {
   language: 'en',
-  gameMode: 'human-vs-human',
-  aiDifficulty: 'medium',
+  aiDifficulty: 'beginner',
   players: {
     Light: { type: 'human' },
-    Dark: { type: 'human' }
+    Dark: { type: 'ai', difficulty: 'beginner' }
   },
   variant: {
     firstMoveMustEnterCenter: false,
@@ -335,35 +333,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     document.documentElement.lang = language;
   },
 
-  setGameMode: (mode: GameMode) => {
-    const { settings } = get();
-    const newSettings = {
-      ...settings,
-      gameMode: mode,
-      players: mode === 'human-vs-ai' ? {
-        Light: { type: 'human' },
-        Dark: { type: 'ai', difficulty: settings.aiDifficulty }
-      } : {
-        Light: { type: 'human' },
-        Dark: { type: 'human' }
-      }
-    };
-    set({ settings: newSettings });
-    saveSettings(newSettings);
-    
-    // Start a new game when mode changes
-    get().newGame();
-  },
-
   setAIDifficulty: (difficulty: AIDifficulty) => {
     const { settings } = get();
     const newSettings = {
       ...settings,
       aiDifficulty: difficulty,
-      players: settings.gameMode === 'human-vs-ai' ? {
+      players: {
         Light: { type: 'human' },
         Dark: { type: 'ai', difficulty }
-      } : settings.players
+      }
     };
     set({ settings: newSettings });
     saveSettings(newSettings);

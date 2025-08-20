@@ -76,7 +76,7 @@ function App() {
         {/* Footer */}
         <footer className="mt-12 text-center text-xs text-muted-foreground">
           <p>
-            Traditional Seejeh • Made with React & TypeScript
+            Traditional Seejeh with AI Opponents • Made with React & TypeScript
           </p>
         </footer>
       </div>

@@ -64,20 +64,18 @@ export function Controls() {
   
   return (
     <div className="space-y-4">
-      {/* Game Mode Info */}
-      {settings.gameMode === 'human-vs-ai' && (
-        <Card className="border-primary/20">
-          <CardContent className="pt-4">
-            <div className="flex items-center gap-2 text-sm">
-              <Robot size={16} className="text-primary" />
-              <span className="font-medium">{t('mode.human-vs-ai')}</span>
-              <Badge variant="outline">
-                {t(`aiDifficulty.${settings.aiDifficulty}`)}
-              </Badge>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      {/* AI Opponent Info */}
+      <Card className="border-primary/20">
+        <CardContent className="pt-4">
+          <div className="flex items-center gap-2 text-sm">
+            <Robot size={16} className="text-primary" />
+            <span className="font-medium">{t('mode.human-vs-ai')}</span>
+            <Badge variant="outline">
+              {t(`aiDifficulty.${settings.aiDifficulty}`)}
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
       
       {/* Game Status */}
       <Card>
