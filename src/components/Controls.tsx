@@ -6,10 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { HintsPanel } from './HintsPanel';
 import { useGameStore } from '../state/gameStore';
-import { countStones } from '../lib/rules';
+import { countStones, hasAnyLegalMove } from '../lib/rules';
 import { useTranslation } from '../hooks/useTranslation';
 import { isAITurn } from '../lib/ai';
-import { Settings, RotateCcw, Robot } from '@phosphor-icons/react';
+import { Settings, RotateCcw, Robot, ArrowRight } from '@phosphor-icons/react';
 
 export function Controls() {
   const {
@@ -17,6 +17,7 @@ export function Controls() {
     settings,
     newGame,
     endChainCapture,
+    endTurn,
     setShowSettings,
     blockadeRemovalMode,
     aiThinking
@@ -27,6 +28,7 @@ export function Controls() {
   const lightCount = countStones(gameState, 'Light');
   const darkCount = countStones(gameState, 'Dark');
   const isCurrentAI = isAITurn(gameState, settings.players);
+  const hasMovesAvailable = hasAnyLegalMove(gameState, gameState.current);
   
   const getPhaseInstructions = () => {
     if (blockadeRemovalMode) {
@@ -41,6 +43,10 @@ export function Controls() {
       case 'placement':
         return t('placementInstructions');
       case 'movement':
+        // Check if player has any moves available
+        if (!hasMovesAvailable && !isCurrentAI) {
+          return t('movementInstructionsNoMoves');
+        }
         return t('movementInstructions');
       case 'chain':
         return t('chainInstructions');
@@ -78,6 +84,21 @@ export function Controls() {
         </CardContent>
       </Card>
       
+      {/* No Moves Warning */}
+      {gameState.phase === 'movement' && !hasMovesAvailable && !isCurrentAI && !blockadeRemovalMode && (
+        <Card className="border-accent/50 bg-accent/5">
+          <CardContent className="pt-4">
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex-shrink-0 w-2 h-2 bg-accent rounded-full animate-pulse"></div>
+              <div>
+                <div className="font-medium text-accent">{t('toast.noMovesAvailable')}</div>
+                <div className="text-muted-foreground mt-1">{t('toast.noMovesEndTurn')}</div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      
       {/* Game Status */}
       <Card>
         <CardHeader className="pb-3">
@@ -111,7 +132,9 @@ export function Controls() {
             >
               {t(`phase.${gameState.phase}`)}
             </Badge>
-            {getPhaseInstructions()}
+            <span className={!hasMovesAvailable && gameState.phase === 'movement' && !isCurrentAI ? 'text-accent font-medium' : ''}>
+              {getPhaseInstructions()}
+            </span>
           </div>
           
           {gameState.phase === 'placement' && (
@@ -156,6 +179,19 @@ export function Controls() {
               disabled={aiThinking}
             >
               {t('endChain')}
+            </Button>
+          )}
+          
+          {gameState.phase === 'movement' && !hasMovesAvailable && !isCurrentAI && !blockadeRemovalMode && (
+            <Button
+              onClick={endTurn}
+              variant="default"
+              size="sm"
+              className="w-full bg-accent hover:bg-accent/90"
+              disabled={aiThinking}
+            >
+              <ArrowRight size={16} className="mr-2" />
+              {t('endTurn')}
             </Button>
           )}
           

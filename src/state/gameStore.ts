@@ -46,6 +46,7 @@ interface GameStore {
   moveStone: (from: Cell, to: Cell) => void;
   chainStep: (to: Cell) => void;
   endChainCapture: () => void;
+  endTurn: () => void;
   removeBlockadeStone: (cell: Cell) => void;
   
   // AI actions
@@ -358,6 +359,46 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       
       // Check for AI turn after chain end
+      setTimeout(() => get().checkForAITurn(), 300);
+    } catch (error) {
+      get().showToast((error as Error).message);
+      soundSystem.play('invalid');
+    }
+  },
+
+  endTurn: () => {
+    const { gameState } = get();
+    
+    try {
+      // Only allow ending turn if no moves available during movement phase
+      if (gameState.phase !== 'movement' || hasAnyLegalMove(gameState, gameState.current)) {
+        get().showToast('You have available moves');
+        soundSystem.play('invalid');
+        return;
+      }
+      
+      // Switch to next player
+      const nextPlayer = gameState.current === 'Light' ? 'Dark' : 'Light';
+      const newState = { 
+        ...gameState, 
+        current: nextPlayer,
+        capturedLastMove: []
+      };
+      
+      // Check for blockade after turn change
+      const needsBlockadeResolution = !hasAnyLegalMove(newState, newState.current);
+      
+      set({ 
+        gameState: newState, 
+        selectedCell: null,
+        blockadeRemovalMode: needsBlockadeResolution && !newState.winner
+      });
+      saveGameState(newState);
+      
+      // Play turn end sound
+      soundSystem.play('move');
+      
+      // Check for AI turn after human turn end
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);

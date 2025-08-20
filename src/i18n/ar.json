@@ -32,8 +32,10 @@
   "stonesToPlace": "الأحجار للوضع",
   "placementInstructions": "ضع حجرين في كل دور",
   "movementInstructions": "حرك حجراً واحداً عمودياً",
+  "movementInstructionsNoMoves": "لا توجد حركات متاحة - أنه دورك",
   "chainInstructions": "استمر في الأسر أو أنه الدور",
   "endChain": "إنهاء السلسلة",
+  "endTurn": "إنهاء الدور",
   "winner": "{{player}} فاز!",
   "gameOver": "انتهت اللعبة",
   "stalemate": "إعلان التعادل",
@@ -49,6 +51,7 @@
     "mustPlaceTwo": "يجب وضع حجرين في كل دور",
     "selectPieceFirst": "اختر قطعة للحركة أولاً",
     "noMovesAvailable": "لا توجد حركات متاحة",
+    "noMovesEndTurn": "لا توجد حركات متاحة - اضغط إنهاء الدور",
     "aiMoveError": "فشلت حركة الذكاء الاصطناعي"
   },
   "hints": {

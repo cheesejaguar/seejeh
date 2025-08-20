@@ -32,8 +32,10 @@
   "stonesToPlace": "Stones to Place",
   "placementInstructions": "Place 2 stones per turn",
   "movementInstructions": "Move one stone orthogonally",
+  "movementInstructionsNoMoves": "No moves available - end your turn",
   "chainInstructions": "Continue capturing or end turn",
   "endChain": "End Chain",
+  "endTurn": "End Turn",
   "winner": "{{player}} Wins!",
   "gameOver": "Game Over",
   "stalemate": "Declare Stalemate",
@@ -49,6 +51,7 @@
     "mustPlaceTwo": "Must place 2 stones per turn",
     "selectPieceFirst": "Select a piece to move",
     "noMovesAvailable": "No moves available",
+    "noMovesEndTurn": "No moves available - click End Turn",
     "aiMoveError": "AI move failed"
   },
   "hints": {
