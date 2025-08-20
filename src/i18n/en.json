@@ -175,5 +175,23 @@
   "colors": {
     "light": "Light",
     "dark": "Dark"
+  },
+  "analysis": {
+    "title": "AI Move Analysis",
+    "hidden": "Move analysis hidden",
+    "show": "Show Analysis",
+    "waiting": "Waiting for AI move to analyze...",
+    "primaryReason": "Primary Reason",
+    "evaluation": "Move Evaluation",
+    "factors": "Tactical Factors",
+    "details": "Additional Details",
+    "captures": "Captures",
+    "mobility": "Mobility",
+    "safety": "Safety",
+    "position": "Position",
+    "confidence": "Confidence",
+    "enable": "Enable Move Analysis",
+    "disable": "Disable Move Analysis",
+    "description": "Shows detailed reasoning behind AI moves to help you understand strategic thinking"
   }
 }

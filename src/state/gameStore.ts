@@ -19,8 +19,9 @@ import {
   detectStalemate
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
-import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves, shouldAIAcceptStalemate, shouldAIOfferStalemate } from '../lib/ai';
+import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves, shouldAIAcceptStalemate, shouldAIOfferStalemate, analyzeAIMove, getLastAIMoveAnalysis } from '../lib/ai';
 import { soundSystem } from '../lib/soundSystem';
+import { MoveAnalysis } from '../lib/types';
 
 interface GameStore {
   // Game state
@@ -47,6 +48,10 @@ interface GameStore {
   topMoves: Array<{ move: any; score: number; description: string }>;
   hintsEnabled: boolean;
   
+  // Move analysis system
+  showMoveAnalysis: boolean;
+  lastAIAnalysis: MoveAnalysis | null;
+  
   // Actions
   newGame: () => void;
   loadSavedGame: () => void;
@@ -71,6 +76,11 @@ interface GameStore {
   toggleHints: () => void;
   getHint: () => void;
   clearHints: () => void;
+  
+  // Move analysis actions
+  setShowMoveAnalysis: (show: boolean) => void;
+  setMoveAnalysisEnabled: (enabled: boolean) => void;
+  updateAIAnalysis: (analysis: MoveAnalysis | null) => void;
   
   // Preview actions
   setHoveredMove: (cell: Cell | null) => void;
@@ -111,7 +121,8 @@ const defaultSettings: GameSettings = {
   hintsEnabled: false,
   soundEnabled: true,
   soundVolume: 0.5,
-  capturePreviewsEnabled: true
+  capturePreviewsEnabled: true,
+  moveAnalysisEnabled: true
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -135,6 +146,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentHint: null,
   topMoves: [],
   hintsEnabled: (loadSettings() || defaultSettings).hintsEnabled,
+  
+  // Move analysis system
+  showMoveAnalysis: false,
+  lastAIAnalysis: null,
 
   newGame: () => {
     const { settings, endGameSession } = get();
@@ -414,7 +429,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
       
       // Switch to next player
-      const nextPlayer = gameState.current === 'Light' ? 'Dark' : 'Light';
+      const nextPlayer: Player = gameState.current === 'Light' ? 'Dark' : 'Light';
       const newState = { 
         ...gameState, 
         current: nextPlayer,
@@ -544,6 +559,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
         if (!aiMove) {
           set({ aiThinking: false });
           return;
+        }
+        
+        // Generate move analysis if enabled
+        const { settings } = get();
+        if (settings.moveAnalysisEnabled && aiMove.from && aiMove.to) {
+          const analysis = analyzeAIMove(gameState, aiMove, settings.aiDifficulty);
+          get().updateAIAnalysis(analysis);
         }
         
         if (aiMove.from && aiMove.to) {
@@ -828,6 +850,26 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     
     set({ currentSession: null });
+  },
+  
+  // Move analysis actions
+  setShowMoveAnalysis: (show: boolean) => set({ showMoveAnalysis: show }),
+  
+  setMoveAnalysisEnabled: (enabled: boolean) => {
+    const { settings } = get();
+    const newSettings = { ...settings, moveAnalysisEnabled: enabled };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
+  },
+  
+  updateAIAnalysis: (analysis: MoveAnalysis | null) => {
+    set({ lastAIAnalysis: analysis });
+    
+    // Auto-show analysis panel if it's enabled and we have new analysis
+    const { settings } = get();
+    if (analysis && settings.moveAnalysisEnabled) {
+      set({ showMoveAnalysis: true });
+    }
   }
 }));
 

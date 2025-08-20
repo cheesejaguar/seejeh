@@ -129,10 +129,42 @@ export interface GameSettings {
   soundEnabled: boolean;
   soundVolume: number;
   capturePreviewsEnabled: boolean;
+  moveAnalysisEnabled: boolean;
 }
 
 export interface GameSession {
   startTime: number;
   endTime?: number;
   moves: number;
+}
+
+// Move Analysis Types
+export interface MoveAnalysis {
+  move: AIMove;
+  score: number;
+  reasoning: string[];
+  factors: {
+    captures: number;
+    centerControl: number;
+    mobility: number;
+    safety: number;
+    positioning: number;
+  };
+  confidence: number; // 0-100
+}
+
+export interface AIMove {
+  type: 'placement' | 'movement';
+  cells: Cell[];
+  from?: Cell;
+  to?: Cell;
+}
+
+export interface MoveExplanation {
+  primary: string;
+  details: string[];
+  evaluation: {
+    strength: 'weak' | 'good' | 'strong' | 'excellent';
+    reasoning: string;
+  };
 }

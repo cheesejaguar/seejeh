@@ -57,7 +57,7 @@ export function Board() {
   
   const isValidPieceMove = (cell: CellType): boolean => {
     return (gameState.phase === 'movement' || gameState.phase === 'chain') && 
-           selectedCell && isValidMove(cell);
+           selectedCell !== null && isValidMove(cell);
   };
   
   const isSelected = (cell: CellType): boolean => {

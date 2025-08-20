@@ -5,11 +5,12 @@ import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { HintsPanel } from './HintsPanel';
+import { MoveAnalysisPanel } from './MoveAnalysisPanel';
 import { useGameStore } from '../state/gameStore';
 import { countStones, hasAnyLegalMove } from '../lib/rules';
 import { useTranslation } from '../hooks/useTranslation';
 import { isAITurn } from '../lib/ai';
-import { Settings, RotateCcw, Robot, ArrowRight, Flag, Handshake } from '@phosphor-icons/react';
+import { Gear, ArrowClockwise, Robot, ArrowRight, Flag, Handshake } from '@phosphor-icons/react';
 
 export function Controls() {
   const {
@@ -65,7 +66,7 @@ export function Controls() {
         <div className="flex items-center gap-2">
           <Robot size={16} className="text-primary" />
           <span>{playerName}</span>
-          <Badge variant="secondary" size="sm">AI</Badge>
+          <Badge variant="secondary">AI</Badge>
         </div>
       );
     }
@@ -159,7 +160,7 @@ export function Controls() {
               className="flex-1"
               disabled={aiThinking}
             >
-              <RotateCcw size={16} className="mr-2" />
+              <ArrowClockwise size={16} className="mr-2" />
               {t('newGame')}
             </Button>
             
@@ -169,7 +170,7 @@ export function Controls() {
               size="sm"
               disabled={aiThinking}
             >
-              <Settings size={16} />
+              <Gear size={16} />
             </Button>
           </div>
           
@@ -217,7 +218,7 @@ export function Controls() {
                     {gameState.winReason.type === 'stoneCount' && (
                       t('winReason.stoneCount', {
                         opponent: t(`player.${gameState.winReason.loser}`),
-                        count: gameState.winReason.loserStoneCount
+                        count: gameState.winReason.loserStoneCount.toString()
                       })
                     )}
                     {gameState.winReason.type === 'resignation' && (
@@ -231,7 +232,7 @@ export function Controls() {
                   </div>
                   {gameState.winReason.type === 'stoneCount' && (
                     <div className="text-xs text-muted-foreground">
-                      {t('winReason.threshold', { threshold: 7 })}
+                      {t('winReason.threshold', { threshold: '7' })}
                     </div>
                   )}
                 </div>
@@ -313,6 +314,9 @@ export function Controls() {
       
       {/* Hints Panel */}
       <HintsPanel />
+      
+      {/* Move Analysis Panel */}
+      <MoveAnalysisPanel />
     </div>
   );
 }

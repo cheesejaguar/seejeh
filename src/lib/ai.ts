@@ -1,6 +1,6 @@
 // FILE: src/lib/ai.ts
 
-import { GameState, Player, Cell, AIDifficulty } from './types';
+import { GameState, Player, Cell, AIDifficulty, MoveAnalysis, AIMove, MoveExplanation } from './types';
 import { 
   movesFor, 
   placementsFor, 
@@ -13,13 +13,6 @@ import {
   resolveCaptures,
   hasAnyLegalMove
 } from './rules';
-
-interface AIMove {
-  type: 'placement' | 'movement';
-  cells: Cell[];
-  from?: Cell;
-  to?: Cell;
-}
 
 interface EvaluationWeights {
   stoneCount: number;
@@ -583,4 +576,228 @@ export function shouldAIOfferStalemate(state: GameState, difficulty: AIDifficult
   }
   
   return false;
+}
+
+/**
+ * Analyze a specific AI move and explain why it was chosen
+ */
+export function analyzeAIMove(
+  state: GameState, 
+  move: AIMove, 
+  difficulty: AIDifficulty
+): MoveAnalysis {
+  const config = DIFFICULTY_CONFIGS[difficulty];
+  const newState = applyMoveToState(state, move);
+  
+  // Calculate evaluation factors
+  const factors = {
+    captures: 0,
+    centerControl: 0,
+    mobility: 0,
+    safety: 0,
+    positioning: 0
+  };
+  
+  const reasoning: string[] = [];
+  
+  // Analyze captures
+  if (move.type === 'movement' && move.to) {
+    const captures = resolveCaptures(newState, move.to);
+    factors.captures = captures.captured.length;
+    
+    if (captures.captured.length > 0) {
+      reasoning.push(`Captures ${captures.captured.length} opponent stone${captures.captured.length > 1 ? 's' : ''}`);
+    }
+  }
+  
+  // Analyze center control
+  if (move.type === 'movement' && move.to && isCenter(move.to)) {
+    factors.centerControl = 1;
+    reasoning.push("Secures the powerful center position");
+  } else if (move.type === 'placement') {
+    // Check proximity to center for placements
+    const centerDistance = move.cells.map(cell => 
+      Math.abs(cell.r - 3) + Math.abs(cell.c - 3)
+    ).reduce((min, dist) => Math.min(min, dist), Infinity);
+    
+    if (centerDistance <= 2) {
+      factors.centerControl = 0.5;
+      reasoning.push("Places stones near the strategic center area");
+    }
+  }
+  
+  // Analyze mobility changes
+  const oldMobility = calculateMobility(state, state.current);
+  const newMobility = calculateMobility(newState, state.current);
+  factors.mobility = newMobility - oldMobility;
+  
+  if (factors.mobility > 0) {
+    reasoning.push("Improves future movement options");
+  } else if (factors.mobility < -1) {
+    reasoning.push("Sacrifices mobility for tactical gain");
+  }
+  
+  // Analyze positioning
+  if (move.type === 'movement' && move.from && move.to) {
+    const enemyNeighbors = neighbors(move.to).filter(cell => 
+      state.board[cell.r]?.[cell.c] === (state.current === 'Light' ? 'Dark' : 'Light')
+    );
+    
+    if (enemyNeighbors.length >= 2) {
+      factors.positioning = 0.8;
+      reasoning.push("Moves into aggressive position near enemy stones");
+    }
+    
+    // Check if creating formation
+    const friendlyNeighbors = neighbors(move.to).filter(cell => 
+      state.board[cell.r]?.[cell.c] === state.current
+    );
+    
+    if (friendlyNeighbors.length >= 2) {
+      factors.positioning = 0.6;
+      reasoning.push("Forms strong defensive formation");
+    }
+  }
+  
+  // Analyze safety
+  if (move.type === 'movement' && move.to) {
+    const isToSafe = isCenter(move.to);
+    if (isToSafe) {
+      factors.safety = 1;
+      reasoning.push("Moves to safety of the center square");
+    } else {
+      // Check if move puts piece at risk
+      const enemyNeighbors = neighbors(move.to).filter(cell => 
+        state.board[cell.r]?.[cell.c] === (state.current === 'Light' ? 'Dark' : 'Light')
+      );
+      
+      if (enemyNeighbors.length === 0) {
+        factors.safety = 0.3;
+        reasoning.push("Maintains safe distance from enemy stones");
+      }
+    }
+  }
+  
+  // Calculate overall score
+  const score = evaluatePosition(newState, state.current, config.weights);
+  
+  // Determine confidence based on score difference and move strength
+  const scoreImprovement = score - evaluatePosition(state, state.current, config.weights);
+  let confidence = Math.min(100, Math.max(10, 50 + scoreImprovement * 10));
+  
+  // Boost confidence for clear tactical moves
+  if (factors.captures > 0) {
+    confidence = Math.min(100, confidence + 20);
+  }
+  
+  // Reduce confidence for risky moves
+  if (factors.safety < 0) {
+    confidence = Math.max(10, confidence - 15);
+  }
+  
+  // Add strategic reasoning based on difficulty
+  if (reasoning.length === 0) {
+    switch (difficulty) {
+      case 'beginner':
+        reasoning.push("Basic positional move");
+        break;
+      case 'easy':
+        reasoning.push("Simple strategic improvement");
+        break;
+      case 'medium':
+        reasoning.push("Calculated positional advantage");
+        break;
+      case 'hard':
+        reasoning.push("Deep strategic consideration");
+        break;
+    }
+  }
+  
+  return {
+    move,
+    score,
+    reasoning,
+    factors,
+    confidence: Math.round(confidence)
+  };
+}
+
+/**
+ * Generate detailed explanation for a move
+ */
+export function explainMove(analysis: MoveAnalysis): MoveExplanation {
+  const { move, factors, reasoning, confidence } = analysis;
+  
+  let primary = reasoning[0] || "Strategic positioning move";
+  const details = reasoning.slice(1);
+  
+  // Determine move strength
+  let strength: 'weak' | 'good' | 'strong' | 'excellent';
+  let evaluationReasoning: string;
+  
+  if (confidence >= 85) {
+    strength = 'excellent';
+    evaluationReasoning = "This move provides significant tactical or strategic advantage.";
+  } else if (confidence >= 70) {
+    strength = 'strong';
+    evaluationReasoning = "This move offers clear benefits with minimal risk.";
+  } else if (confidence >= 50) {
+    strength = 'good';
+    evaluationReasoning = "This move maintains position with some potential upside.";
+  } else {
+    strength = 'weak';
+    evaluationReasoning = "This move may be forced or offers limited benefit.";
+  }
+  
+  // Add specific tactical details
+  if (factors.captures > 0) {
+    details.unshift(`Immediately removes ${factors.captures} enemy stone${factors.captures > 1 ? 's' : ''} from the board`);
+  }
+  
+  if (factors.centerControl > 0) {
+    details.push("Center control is crucial for both offense and defense");
+  }
+  
+  if (factors.mobility > 1) {
+    details.push("Increased mobility provides more tactical options");
+  }
+  
+  if (factors.safety > 0.5) {
+    details.push("Safety is prioritized to prevent counterattacks");
+  }
+  
+  return {
+    primary,
+    details,
+    evaluation: {
+      strength,
+      reasoning: evaluationReasoning
+    }
+  };
+}
+
+/**
+ * Get the last AI move analysis from game state
+ */
+export function getLastAIMoveAnalysis(
+  state: GameState, 
+  difficulty: AIDifficulty
+): MoveAnalysis | null {
+  if (state.moveHistory.length === 0) {
+    return null;
+  }
+  
+  const lastMove = state.moveHistory[state.moveHistory.length - 1];
+  
+  // Convert move record to AI move format
+  const aiMove: AIMove = {
+    type: 'movement',
+    cells: [lastMove.to],
+    from: lastMove.from,
+    to: lastMove.to
+  };
+  
+  // Get previous state (this is simplified - in a real implementation 
+  // you'd want to track the actual previous state)
+  return analyzeAIMove(state, aiMove, difficulty);
 }

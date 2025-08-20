@@ -30,7 +30,8 @@ export function SettingsModal() {
     toggleHints,
     setSoundEnabled,
     setSoundVolume,
-    setCapturePreviewsEnabled
+    setCapturePreviewsEnabled,
+    setMoveAnalysisEnabled
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -68,6 +69,35 @@ export function SettingsModal() {
               id="hints"
               checked={settings.hintsEnabled}
               onCheckedChange={toggleHints}
+            />
+          </div>
+          
+          {/* Move Analysis */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Label 
+                htmlFor="moveAnalysis"
+                className="text-sm leading-relaxed"
+              >
+                {t('analysis.enable')}
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="sm" className="h-4 w-4 p-0">
+                    <Info size={12} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="top" align="center" sideOffset={4}>
+                  <p className="text-xs max-w-48">
+                    {t('analysis.description')}
+                  </p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <Switch
+              id="moveAnalysis"
+              checked={settings.moveAnalysisEnabled}
+              onCheckedChange={setMoveAnalysisEnabled}
             />
           </div>
           
