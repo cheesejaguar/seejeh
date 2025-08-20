@@ -80,6 +80,8 @@
     "enableHints": "تفعيل التلميحات",
     "optimalMove": "الحركة المثلى",
     "topMoves": "أفضل الحركات",
+    "defaultBest": "الحركة الأفضل معروضة افتراضياً",
+    "hoverPreview": "مرر الماوس فوق الحركات أعلاه لمعاينتها على الرقعة",
     "moveQuality": {
       "excellent": "ممتاز",
       "good": "جيد",

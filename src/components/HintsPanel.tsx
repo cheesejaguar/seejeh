@@ -16,9 +16,11 @@ export const HintsPanel: React.FC = () => {
     gameState, 
     settings,
     aiThinking,
+    hoveredHintIndex,
     toggleHints,
     getHint,
-    clearHints
+    clearHints,
+    setHoveredHintIndex
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -111,19 +113,27 @@ export const HintsPanel: React.FC = () => {
         {/* Hints display */}
         {showHints && topMoves.length > 0 && (
           <div className="space-y-2">
-            <h4 className="text-xs font-medium text-muted-foreground">
-              {t('hints.topMoves')}
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-medium text-muted-foreground">
+                {t('hints.topMoves')}
+              </h4>
+              <p className="text-xs text-muted-foreground/80">
+                {t('hints.defaultBest') || 'Best move shown by default'}
+              </p>
+            </div>
             <div className="space-y-1">
               {topMoves.slice(0, 3).map((move, index) => (
                 <div
                   key={index}
                   className={`
-                    p-2 rounded text-xs border
-                    ${index === 0 ? 'bg-green-50 border-green-200' : 
-                      index === 1 ? 'bg-yellow-50 border-yellow-200' : 
-                      'bg-orange-50 border-orange-200'}
+                    p-2 rounded text-xs border cursor-pointer transition-all
+                    ${index === 0 ? 'bg-green-50 border-green-200 hover:bg-green-100' : 
+                      index === 1 ? 'bg-yellow-50 border-yellow-200 hover:bg-yellow-100' : 
+                      'bg-orange-50 border-orange-200 hover:bg-orange-100'}
+                    ${hoveredHintIndex === index ? 'ring-2 ring-blue-300' : ''}
                   `}
+                  onMouseEnter={() => setHoveredHintIndex(index)}
+                  onMouseLeave={() => setHoveredHintIndex(null)}
                 >
                   <div className="flex items-center gap-2">
                     <span className={`
@@ -141,6 +151,9 @@ export const HintsPanel: React.FC = () => {
                 </div>
               ))}
             </div>
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              {t('hints.hoverPreview') || 'Hover over moves above to preview them on the board'}
+            </p>
           </div>
         )}
 

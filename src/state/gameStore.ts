@@ -48,6 +48,7 @@ interface GameStore {
   currentHint: { move: any; score: number; description: string } | null;
   topMoves: Array<{ move: any; score: number; description: string }>;
   hintsEnabled: boolean;
+  hoveredHintIndex: number | null;
   
   // Move analysis system
   showMoveAnalysis: boolean;
@@ -77,6 +78,7 @@ interface GameStore {
   toggleHints: () => void;
   getHint: () => void;
   clearHints: () => void;
+  setHoveredHintIndex: (index: number | null) => void;
   
   // Move analysis actions
   setShowMoveAnalysis: (show: boolean) => void;
@@ -149,6 +151,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   currentHint: null,
   topMoves: [],
   hintsEnabled: (loadSettings() || defaultSettings).hintsEnabled,
+  hoveredHintIndex: null,
   
   // Move analysis system
   showMoveAnalysis: false,
@@ -171,6 +174,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       showHints: false,
       currentHint: null,
       topMoves: [],
+      hoveredHintIndex: null,
       previewCaptures: [],
       hoveredMove: null
     });
@@ -606,7 +610,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       settings: newSettings,
       showHints: false,
       currentHint: null,
-      topMoves: []
+      topMoves: [],
+      hoveredHintIndex: null
     });
     saveSettings(newSettings);
   },
@@ -626,11 +631,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ 
         showHints: true,
         currentHint: optimalMove,
-        topMoves
+        topMoves,
+        hoveredHintIndex: null // Reset hover state when getting new hints
       });
       
       if (optimalMove) {
-        get().showToast(`Hint: ${optimalMove.description}`);
+        get().showToast(`Best move: ${optimalMove.description}`);
       } else {
         get().showToast('No moves available');
       }
@@ -643,8 +649,24 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ 
       showHints: false,
       currentHint: null,
-      topMoves: []
+      topMoves: [],
+      hoveredHintIndex: null
     });
+  },
+
+  setHoveredHintIndex: (index: number | null) => {
+    const { gameState } = get();
+    
+    set({ hoveredHintIndex: index });
+    
+    // Only clear selected cell if we're not in a chain capture phase
+    // and if the player is actually hovering over a hint (not clearing hover)
+    if (index !== null && gameState.phase !== 'chain') {
+      const { selectedCell } = get();
+      if (selectedCell) {
+        set({ selectedCell: null });
+      }
+    }
   },
 
   setHoveredMove: (cell: Cell | null) => {

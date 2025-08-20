@@ -80,6 +80,8 @@
     "enableHints": "Enable Hints",
     "optimalMove": "Optimal Move",
     "topMoves": "Top Moves",
+    "defaultBest": "Best move shown by default",
+    "hoverPreview": "Hover over moves above to preview them on the board",
     "moveQuality": {
       "excellent": "Excellent",
       "good": "Good",
