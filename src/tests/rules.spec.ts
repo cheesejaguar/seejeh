@@ -61,6 +61,16 @@ describe('Seejeh Rules Engine', () => {
       }).toThrow('Cannot place in center during placement phase');
     });
 
+    it('should prevent placement on occupied cells', () => {
+      const state = initialState7x7();
+      // Place a stone first
+      state.board[0][0] = 'Light';
+      
+      expect(() => {
+        applyPlacement(state, { r: 0, c: 0 }, { r: 0, c: 1 });
+      }).toThrow('Cell already occupied');
+    });
+
     it('should transition to movement phase when all stones placed', () => {
       let state = initialState7x7();
       state.stonesToPlace = { Light: 2, Dark: 0 };

@@ -260,6 +260,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { gameState } = get();
     
     try {
+      // Validate the placement first
+      if (gameState.board[cell.r][cell.c] !== null) {
+        throw new Error('Cell already occupied');
+      }
+      
+      if (isCenter(cell)) {
+        throw new Error('Cannot place in center during placement phase');
+      }
+      
       if (gameState.placementCount === 0) {
         // First stone of the turn - just place it and increment counter
         const newState = { ...gameState };
