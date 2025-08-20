@@ -13,10 +13,11 @@ import { Switch } from './ui/switch';
 import { Label } from './ui/label';
 import { Slider } from './ui/slider';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
+import { Tooltip, TooltipTrigger, TooltipContent } from './ui/tooltip';
 import { useGameStore } from '../state/gameStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { X, Robot, SpeakerHigh, SpeakerX } from '@phosphor-icons/react';
+import { X, Robot, SpeakerHigh, SpeakerX, Info } from '@phosphor-icons/react';
 import { AIDifficulty } from '../lib/types';
 
 export function SettingsModal() {
@@ -72,12 +73,32 @@ export function SettingsModal() {
           
           {/* Capture Previews */}
           <div className="flex items-center justify-between">
-            <Label 
-              htmlFor="capturePreviews"
-              className="text-sm leading-relaxed"
-            >
-              {t('ui.capturePreviewsEnabled')}
-            </Label>
+            <div className="flex items-center gap-2">
+              <Label 
+                htmlFor="capturePreviews"
+                className="text-sm leading-relaxed"
+              >
+                {t('ui.capturePreviewsEnabled')}
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-5 w-5 p-0 text-muted-foreground hover:text-foreground"
+                  >
+                    <Info size={12} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent 
+                  side="top" 
+                  className="max-w-xs text-center"
+                  sideOffset={5}
+                >
+                  {t('ui.capturePreviewsTooltip')}
+                </TooltipContent>
+              </Tooltip>
+            </div>
             <Switch
               id="capturePreviews"
               checked={settings.capturePreviewsEnabled}

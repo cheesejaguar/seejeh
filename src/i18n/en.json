@@ -77,7 +77,8 @@
     }
   },
   "ui": {
-    "capturePreviewsEnabled": "Show capture previews"
+    "capturePreviewsEnabled": "Show capture previews",
+    "capturePreviewsTooltip": "Visual capture previews help beginners understand the game, but experts often prefer a clean minimal interface"
   },
   "about": {
     "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. This digital version features intelligent AI opponents with adjustable difficulty levels, allowing you to learn and master this traditional strategic game at your own pace.",
