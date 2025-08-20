@@ -1,0 +1,60 @@
+{
+  "title": "Seejeh",
+  "subtitle": "Traditional 7×7 Board Game",
+  "newGame": "New Game",
+  "settings": "Settings",
+  "about": "About",
+  "rules": "Rules",
+  "language": "Language",
+  "currentPlayer": "Current Player",
+  "phase": {
+    "placement": "Placement Phase",
+    "movement": "Movement Phase",
+    "chain": "Chain Capture"
+  },
+  "player": {
+    "Light": "Light",
+    "Dark": "Dark"
+  },
+  "stonesToPlace": "Stones to Place",
+  "placementInstructions": "Place 2 stones per turn",
+  "movementInstructions": "Move one stone orthogonally",
+  "chainInstructions": "Continue capturing or end turn",
+  "endChain": "End Chain",
+  "winner": "{{player}} Wins!",
+  "gameOver": "Game Over",
+  "stalemate": "Declare Stalemate",
+  "variant": {
+    "firstMoveMustEnterCenter": "First move must enter center",
+    "antiShuttle": "Anti-shuttle rule",
+    "blockadeOneRemoval": "Blockade removal"
+  },
+  "toast": {
+    "invalidMove": "Invalid move",
+    "captured": "Captured {{count}} stones",
+    "blockade": "Player blocked - opponent removes one stone",
+    "mustPlaceTwo": "Must place 2 stones per turn",
+    "selectPieceFirst": "Select a piece to move",
+    "noMovesAvailable": "No moves available"
+  },
+  "about": {
+    "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. The game was played in various forms throughout North Africa and the Middle East, representing one of humanity's oldest strategic games.",
+    "rules": {
+      "title": "Game Rules",
+      "placement": "Placement: Players alternate placing 2 stones per turn (48 total)",
+      "movement": "Movement: Move one stone orthogonally one step",
+      "capture": "Capture: Sandwich opponent stones between your pieces",
+      "win": "Win: Reduce opponent to 7 or fewer stones"
+    },
+    "sources": "Sources: Bell, R.C. (1979). Board and Table Games from Many Civilizations"
+  },
+  "accessibility": {
+    "board": "Seejeh game board",
+    "cell": "Cell {{row}}, {{col}}",
+    "stone": "{{player}} stone",
+    "emptyCell": "Empty cell",
+    "centerCell": "Center cell (safe)",
+    "selectedCell": "Selected cell",
+    "validMove": "Valid move destination"
+  }
+}
