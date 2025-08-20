@@ -112,6 +112,8 @@ export interface GameSettings {
     Dark: PlayerConfig;
   };
   hintsEnabled: boolean;
+  soundEnabled: boolean;
+  soundVolume: number;
 }
 
 export interface GameSession {

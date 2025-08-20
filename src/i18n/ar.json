@@ -142,6 +142,11 @@
     "showingRecent": "عرض الألعاب الأخيرة",
     "totalGamesPlayed": "{{total}} لعبة إجمالية"
   },
+  "sound": {
+    "title": "التأثيرات الصوتية",
+    "enabled": "تفعيل التأثيرات الصوتية",
+    "volume": "مستوى الصوت"
+  },
   "colors": {
     "light": "الفاتح",
     "dark": "الغامق"

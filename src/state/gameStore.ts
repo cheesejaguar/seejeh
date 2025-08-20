@@ -15,6 +15,7 @@ import {
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
 import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves } from '../lib/ai';
+import { soundSystem } from '../lib/soundSystem';
 
 interface GameStore {
   // Game state
@@ -66,25 +67,30 @@ interface GameStore {
   showToast: (message: string) => void;
   clearToast: () => void;
   
+  // Sound actions
+  setSoundEnabled: (enabled: boolean) => void;
+  setSoundVolume: (volume: number) => void;
+  
   // Game session tracking
   startGameSession: () => void;
   endGameSession: () => Promise<void>;
-}
 }
 
 const defaultSettings: GameSettings = {
   language: 'en',
   aiDifficulty: 'beginner',
   players: {
-    Light: { type: 'human' },
-    Dark: { type: 'ai', difficulty: 'beginner' }
+    Light: { type: 'human' as const },
+    Dark: { type: 'ai' as const, difficulty: 'beginner' }
   },
   variant: {
     firstMoveMustEnterCenter: false,
     antiShuttle: false,
     blockadeOneRemoval: true
   },
-  hintsEnabled: false
+  hintsEnabled: false,
+  soundEnabled: true,
+  soundVolume: 0.5
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -124,6 +130,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       topMoves: []
     });
     saveGameState(newState);
+    
+    // Play new game sound
+    soundSystem.play('newGame');
     
     // Start new session
     get().startGameSession();
@@ -172,6 +181,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // If cell has current player's stone, select it
     if (gameState.board[cell.r][cell.c] === gameState.current) {
       set({ selectedCell: cell });
+      soundSystem.play('select');
       return;
     }
     
@@ -204,6 +214,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         
         set({ gameState: newState });
         saveGameState(newState);
+        
+        // Play placement sound
+        soundSystem.play('place');
       } else if (gameState.placementCount === 1) {
         // Second stone - place it and end turn
         const currentPlayer = gameState.current;
@@ -225,11 +238,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
         set({ gameState: newState });
         saveGameState(newState);
         
+        // Play placement sound
+        soundSystem.play('place');
+        
         // Check for AI turn after placement
         setTimeout(() => get().checkForAITurn(), 300);
       }
     } catch (error) {
       get().showToast((error as Error).message);
+      soundSystem.play('invalid');
     }
   },
 
@@ -259,19 +276,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       saveGameState(newState);
       
+      // Play appropriate sound
       if (newState.capturedLastMove.length > 0) {
+        soundSystem.play('capture');
         get().showToast(`Captured ${newState.capturedLastMove.length} stones`);
+      } else {
+        soundSystem.play('move');
       }
       
-      // Check if game ended and end session
+      // Check if game ended
       if (newState.winner) {
-        setTimeout(() => get().endGameSession(), 1000);
+        setTimeout(() => {
+          soundSystem.play('win');
+          get().endGameSession();
+        }, 300);
       }
       
       // Check for AI turn after human move
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
+      soundSystem.play('invalid');
     }
   },
 
@@ -295,6 +320,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       saveGameState(newState);
       
       if (newState.capturedLastMove.length > 0) {
+        soundSystem.play('chainCapture');
         get().showToast(`Captured ${newState.capturedLastMove.length} stones`);
       }
       
@@ -302,6 +328,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
+      soundSystem.play('invalid');
     }
   },
 
@@ -319,15 +346,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       saveGameState(newState);
       
+      // Play move sound for ending chain
+      soundSystem.play('move');
+      
       // Check if game ended and end session
       if (newState.winner) {
-        setTimeout(() => get().endGameSession(), 1000);
+        setTimeout(() => {
+          soundSystem.play('win');
+          get().endGameSession();
+        }, 300);
       }
       
       // Check for AI turn after chain end
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
+      soundSystem.play('invalid');
     }
   },
 
@@ -343,11 +377,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       saveGameState(newState);
       get().showToast('Blockade stone removed');
+      soundSystem.play('capture'); // Use capture sound for stone removal
       
       // Check for AI turn after blockade resolution
       setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
+      soundSystem.play('invalid');
     }
   },
 
@@ -417,6 +453,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     } catch (error) {
       set({ aiThinking: false });
       get().showToast('AI move failed');
+      soundSystem.play('invalid');
     }
   },
 
@@ -499,8 +536,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       ...settings,
       aiDifficulty: difficulty,
       players: {
-        Light: { type: 'human' },
-        Dark: { type: 'ai', difficulty }
+        Light: { type: 'human' as const },
+        Dark: { type: 'ai' as const, difficulty }
       }
     };
     set({ settings: newSettings });
@@ -530,6 +567,22 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
   
   clearToast: () => set({ toastMessage: null }),
+  
+  setSoundEnabled: (enabled: boolean) => {
+    const { settings } = get();
+    const newSettings = { ...settings, soundEnabled: enabled };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
+    soundSystem.setEnabled(enabled);
+  },
+  
+  setSoundVolume: (volume: number) => {
+    const { settings } = get();
+    const newSettings = { ...settings, soundVolume: volume };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
+    soundSystem.setVolume(volume);
+  },
   
   startGameSession: () => {
     const session: GameSession = {
@@ -580,3 +633,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ currentSession: null });
   }
 }));
+
+// Initialize sound system with current settings
+const initializeSoundSystem = () => {
+  const settings = useGameStore.getState().settings;
+  soundSystem.setEnabled(settings.soundEnabled);
+  soundSystem.setVolume(settings.soundVolume);
+};
+
+// Initialize on first load
+initializeSoundSystem();

@@ -142,6 +142,11 @@
     "showingRecent": "Showing recent games",
     "totalGamesPlayed": "{{total}} total games played"
   },
+  "sound": {
+    "title": "Sound Effects",
+    "enabled": "Enable sound effects",
+    "volume": "Volume"
+  },
   "colors": {
     "light": "Light",
     "dark": "Dark"

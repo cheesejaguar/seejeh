@@ -11,11 +11,12 @@ import {
 import { Button } from './ui/button';
 import { Switch } from './ui/switch';
 import { Label } from './ui/label';
+import { Slider } from './ui/slider';
 import { RadioGroup, RadioGroupItem } from './ui/radio-group';
 import { useGameStore } from '../state/gameStore';
 import { useTranslation } from '../hooks/useTranslation';
 import { LanguageSwitcher } from './LanguageSwitcher';
-import { X, Robot } from '@phosphor-icons/react';
+import { X, Robot, SpeakerHigh, SpeakerX } from '@phosphor-icons/react';
 import { AIDifficulty } from '../lib/types';
 
 export function SettingsModal() {
@@ -25,7 +26,9 @@ export function SettingsModal() {
     settings, 
     toggleVariant,
     setAIDifficulty,
-    toggleHints
+    toggleHints,
+    setSoundEnabled,
+    setSoundVolume
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -64,6 +67,46 @@ export function SettingsModal() {
               checked={settings.hintsEnabled}
               onCheckedChange={toggleHints}
             />
+          </div>
+          
+          {/* Sound Settings */}
+          <div className="space-y-4">
+            <h3 className="font-medium flex items-center gap-2">
+              {settings.soundEnabled ? <SpeakerHigh size={16} className="text-primary" /> : <SpeakerX size={16} className="text-muted-foreground" />}
+              {t('sound.title')}
+            </h3>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label 
+                  htmlFor="soundEnabled"
+                  className="text-sm leading-relaxed"
+                >
+                  {t('sound.enabled')}
+                </Label>
+                <Switch
+                  id="soundEnabled"
+                  checked={settings.soundEnabled}
+                  onCheckedChange={setSoundEnabled}
+                />
+              </div>
+              
+              {settings.soundEnabled && (
+                <div className="space-y-2">
+                  <Label className="text-sm">
+                    {t('sound.volume')} ({Math.round(settings.soundVolume * 100)}%)
+                  </Label>
+                  <Slider
+                    value={[settings.soundVolume]}
+                    onValueChange={(value) => setSoundVolume(value[0])}
+                    max={1}
+                    min={0}
+                    step={0.1}
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
           </div>
           
           {/* AI Difficulty */}
