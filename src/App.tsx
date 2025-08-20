@@ -39,8 +39,10 @@ function App() {
     // Set initial document attributes
     document.documentElement.dir = settings.language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = settings.language;
-    
-    // Load saved game on startup
+  }, [settings.language]);
+  
+  useEffect(() => {
+    // Load saved game on startup only
     loadSavedGame();
     
     // Check if guest mode is enabled
@@ -51,7 +53,7 @@ function App() {
     if (!isGuestMode) {
       login();
     }
-  }, [settings.language, loadSavedGame, login]);
+  }, [loadSavedGame, login]);
   
   // Show login prompt if not authenticated and not loading and not in guest mode
   if (!isAuthenticated && !authLoading && !guestMode) {

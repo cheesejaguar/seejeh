@@ -16,6 +16,26 @@ describe('AI Engine', () => {
       expect(move?.cells).toHaveLength(1);
     });
 
+    it('should handle first stone placement correctly', () => {
+      const state = initialState7x7();
+      state.placementCount = 0;
+      const move = getBestAIMove(state, 'easy');
+      
+      expect(move).not.toBeNull();
+      expect(move?.type).toBe('placement');
+      expect(move?.cells).toHaveLength(1);
+    });
+
+    it('should handle second stone placement correctly', () => {
+      const state = initialState7x7();
+      state.placementCount = 1;
+      const move = getBestAIMove(state, 'easy');
+      
+      expect(move).not.toBeNull();
+      expect(move?.type).toBe('placement');
+      expect(move?.cells).toHaveLength(1);
+    });
+
     it('should return a movement move during movement phase', () => {
       const state = initialState7x7();
       // Simulate end of placement phase

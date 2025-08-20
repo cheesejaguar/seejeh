@@ -365,19 +365,52 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Add a small delay to show thinking state
       await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
       
-      const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
-      
-      if (!aiMove) {
-        set({ aiThinking: false });
-        return;
-      }
-      
-      if (aiMove.type === 'placement') {
-        // AI placement
-        get().placeStone(aiMove.cells[0]);
-      } else if (aiMove.from && aiMove.to) {
-        // AI movement
-        get().moveStone(aiMove.from, aiMove.to);
+      if (gameState.phase === 'placement') {
+        // Handle AI placement - need to place two stones per turn
+        if (gameState.placementCount === 0) {
+          // First stone of AI turn
+          const aiMove1 = getBestAIMove(gameState, settings.aiDifficulty);
+          if (!aiMove1 || aiMove1.type !== 'placement') {
+            set({ aiThinking: false });
+            return;
+          }
+          
+          // Place first stone
+          get().placeStone(aiMove1.cells[0]);
+          
+          // Small delay before second placement
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          // Get current state after first placement
+          const currentState = get().gameState;
+          
+          // Only proceed with second stone if still in placement and it's still AI's turn
+          if (currentState.phase === 'placement' && currentState.placementCount === 1 && 
+              isAITurn(currentState, settings.players)) {
+            const aiMove2 = getBestAIMove(currentState, settings.aiDifficulty);
+            if (aiMove2 && aiMove2.type === 'placement') {
+              get().placeStone(aiMove2.cells[0]);
+            }
+          }
+        } else if (gameState.placementCount === 1) {
+          // Second stone of AI turn (fallback case)
+          const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
+          if (aiMove && aiMove.type === 'placement') {
+            get().placeStone(aiMove.cells[0]);
+          }
+        }
+      } else {
+        // Handle AI movement
+        const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
+        
+        if (!aiMove) {
+          set({ aiThinking: false });
+          return;
+        }
+        
+        if (aiMove.from && aiMove.to) {
+          get().moveStone(aiMove.from, aiMove.to);
+        }
       }
       
       set({ aiThinking: false });
