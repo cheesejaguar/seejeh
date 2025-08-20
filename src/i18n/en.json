@@ -193,5 +193,28 @@
     "enable": "Enable Move Analysis",
     "disable": "Disable Move Analysis",
     "description": "Shows detailed reasoning behind AI moves to help you understand strategic thinking"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "globalRankings": "Global Rankings",
+    "yourRank": "Your Rank",
+    "rank": "Rank",
+    "player": "Player",
+    "rating": "Rating",
+    "gamesPlayed": "Games",
+    "winRate": "Win Rate",
+    "lastActive": "Last Active",
+    "topPlayers": "Top Players",
+    "yourStats": "Your Statistics",
+    "unranked": "Unranked",
+    "needMoreGames": "Play {{count}} more games to get ranked",
+    "minGamesRequired": "Minimum {{count}} games required for ranking",
+    "filterByDifficulty": "Filter by Difficulty",
+    "allDifficulties": "All Difficulties",
+    "noPlayersYet": "No players ranked yet",
+    "loading": "Loading leaderboard...",
+    "errorLoading": "Failed to load leaderboard",
+    "refreshData": "Refresh Data",
+    "lastUpdated": "Last updated {{time}}"
   }
 }

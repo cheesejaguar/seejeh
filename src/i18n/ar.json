@@ -193,5 +193,28 @@
     "enable": "تفعيل تحليل الحركة",
     "disable": "إلغاء تحليل الحركة",
     "description": "يظهر التفكير المفصل وراء حركات الذكاء الاصطناعي لمساعدتك على فهم التفكير الاستراتيجي"
+  },
+  "leaderboard": {
+    "title": "لوحة المتصدرين",
+    "globalRankings": "التصنيف العالمي",
+    "yourRank": "ترتيبك",
+    "rank": "الترتيب",
+    "player": "اللاعب",
+    "rating": "التقييم",
+    "gamesPlayed": "الألعاب",
+    "winRate": "معدل الفوز",
+    "lastActive": "آخر نشاط",
+    "topPlayers": "أفضل اللاعبين",
+    "yourStats": "إحصائياتك",
+    "unranked": "غير مصنف",
+    "needMoreGames": "العب {{count}} ألعاب أكثر للحصول على تصنيف",
+    "minGamesRequired": "الحد الأدنى {{count}} ألعاب مطلوب للتصنيف",
+    "filterByDifficulty": "تصفية حسب الصعوبة",
+    "allDifficulties": "جميع مستويات الصعوبة",
+    "noPlayersYet": "لا يوجد لاعبين مصنفين بعد",
+    "loading": "جارٍ تحميل لوحة المتصدرين...",
+    "errorLoading": "فشل في تحميل لوحة المتصدرين",
+    "refreshData": "تحديث البيانات",
+    "lastUpdated": "آخر تحديث {{time}}"
   }
 }

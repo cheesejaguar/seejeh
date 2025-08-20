@@ -168,3 +168,35 @@ export interface MoveExplanation {
     reasoning: string;
   };
 }
+
+// Leaderboard Types
+export interface LeaderboardEntry {
+  rank: number;
+  player: {
+    id: number;
+    login: string;
+    avatar_url: string;
+  };
+  rating: number;
+  gamesPlayed: number;
+  winRate: number;
+  lastActive: number; // timestamp
+  overallStats: {
+    wins: number;
+    draws: number;
+    losses: number;
+  };
+  difficultyBreakdown: Record<AIDifficulty, {
+    games: number;
+    wins: number;
+    winRate: number;
+  }>;
+}
+
+export interface LeaderboardData {
+  entries: LeaderboardEntry[];
+  userEntry?: LeaderboardEntry;
+  totalPlayers: number;
+  lastUpdated: number;
+  minGamesForRanking: number;
+}

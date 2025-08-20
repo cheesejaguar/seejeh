@@ -46,6 +46,11 @@
 - **Why**: Provides insight into player improvement, identifies strengths/weaknesses, and motivates continued play
 - **Success Criteria**: Accurate stat calculation, meaningful data visualization, clear progress indicators
 
+### Global Leaderboard System
+- **What**: Ranked leaderboard of all human players showing global performance rankings with ELO-style rating system, filterable by AI difficulty level
+- **Why**: Adds competitive motivation, allows players to compare progress against others, and creates community engagement around skill development
+- **Success Criteria**: Accurate rating calculations reflecting true skill, fair ranking system across difficulty levels, responsive leaderboard updates, clear indication of ranking requirements
+
 ### AI Opponent System
 - **What**: Four difficulty levels (Beginner, Easy, Medium, Hard) with distinct strategic approaches and playing styles
 - **Why**: Provides progressive learning curve from basic rules to advanced strategic mastery

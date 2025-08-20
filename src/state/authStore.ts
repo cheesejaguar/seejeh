@@ -9,6 +9,7 @@ import {
   saveGameResult,
   clearUserData 
 } from '../lib/auth';
+import { invalidateLeaderboardCache } from '../lib/leaderboard';
 
 interface AuthStore extends AuthState {
   // Actions
@@ -96,6 +97,9 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
       // Reload stats to reflect the new game
       const updatedStats = await loadPlayerStats(user.id);
       set({ stats: updatedStats });
+      
+      // Invalidate leaderboard cache since rankings may have changed
+      await invalidateLeaderboardCache();
     } catch (error) {
       console.error('Failed to save game result:', error);
       set({ error: 'Failed to save game result.' });

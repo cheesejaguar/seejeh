@@ -5,6 +5,7 @@ import { LanguageSwitcher } from './components/LanguageSwitcher';
 import { AboutModal } from './components/AboutModal';
 import { SettingsModal } from './components/SettingsModal';
 import { ProfileModal } from './components/ProfileModal';
+import { LeaderboardModal } from './components/LeaderboardModal';
 import { LoginPrompt } from './components/LoginPrompt';
 import { Toast } from './components/Toast';
 import { Button } from './components/ui/button';
@@ -12,7 +13,7 @@ import { Avatar, AvatarFallback, AvatarImage } from './components/ui/avatar';
 import { useGameStore } from './state/gameStore';
 import { useAuthStore } from './state/authStore';
 import { useTranslation } from './hooks/useTranslation';
-import { Info, User } from '@phosphor-icons/react';
+import { Info, User, Trophy } from '@phosphor-icons/react';
 
 function App() {
   const { 
@@ -20,7 +21,9 @@ function App() {
     loadSavedGame, 
     setShowAbout,
     setShowProfile,
+    setShowLeaderboard,
     showProfile,
+    showLeaderboard,
     setLanguage 
   } = useGameStore();
   
@@ -76,6 +79,15 @@ function App() {
             </div>
             
             <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowLeaderboard(true)}
+                variant="outline"
+                size="sm"
+              >
+                <Trophy size={16} className="mr-2" />
+                {t('leaderboard.title')}
+              </Button>
+              
               <Button
                 onClick={() => setShowAbout(true)}
                 variant="outline"
@@ -147,6 +159,10 @@ function App() {
       <ProfileModal 
         open={showProfile} 
         onOpenChange={setShowProfile} 
+      />
+      <LeaderboardModal
+        open={showLeaderboard}
+        onOpenChange={setShowLeaderboard}
       />
       
       {/* Toast Notifications */}

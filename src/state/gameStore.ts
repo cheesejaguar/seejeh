@@ -34,6 +34,7 @@ interface GameStore {
   showAbout: boolean;
   showSettings: boolean;
   showProfile: boolean;
+  showLeaderboard: boolean;
   toastMessage: string | null;
   blockadeRemovalMode: boolean;
   aiThinking: boolean;
@@ -93,6 +94,7 @@ interface GameStore {
   setShowAbout: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
   setShowProfile: (show: boolean) => void;
+  setShowLeaderboard: (show: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
   setCapturePreviewsEnabled: (enabled: boolean) => void;
@@ -133,6 +135,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showAbout: false,
   showSettings: false,
   showProfile: false,
+  showLeaderboard: false,
   toastMessage: null,
   blockadeRemovalMode: false,
   aiThinking: false,
@@ -705,6 +708,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setShowAbout: (show: boolean) => set({ showAbout: show }),
   setShowSettings: (show: boolean) => set({ showSettings: show }),
   setShowProfile: (show: boolean) => set({ showProfile: show }),
+  setShowLeaderboard: (show: boolean) => set({ showLeaderboard: show }),
   
   showToast: (message: string) => {
     set({ toastMessage: message });

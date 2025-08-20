@@ -113,7 +113,7 @@ export function calculateStats(games: GameResult[]): PlayerStats {
   
   stats.currentWinStreak = lastWin ? currentStreak : 0;
   stats.bestWinStreak = bestStreak;
-  stats.winRate = stats.totalGames > 0 ? (stats.wins / stats.totalGames) * 100 : 0;
+  stats.winRate = stats.totalGames > 0 ? stats.wins / stats.totalGames : 0;
   stats.averageGameDuration = stats.totalGames > 0 ? totalDuration / stats.totalGames : 0;
   stats.averageMovesPerGame = stats.totalGames > 0 ? totalMoves / stats.totalGames : 0;
   stats.favoriteColor = colorCounts.Light >= colorCounts.Dark ? 'Light' : 'Dark';
@@ -124,7 +124,7 @@ export function calculateStats(games: GameResult[]): PlayerStats {
     stats.difficultyStats[difficulty] = {
       games: data.games,
       wins: data.wins,
-      winRate: data.games > 0 ? (data.wins / data.games) * 100 : 0
+      winRate: data.games > 0 ? data.wins / data.games : 0
     };
   }
   
@@ -147,6 +147,17 @@ export async function saveGameResult(game: GameResult): Promise<void> {
     // Also update cached stats
     const stats = calculateStats(updatedGames);
     await spark.kv.set(`stats:${user.id}`, stats);
+    
+    // Save user info for leaderboard (only if not already saved or outdated)
+    const userKey = `user:${user.id}`;
+    const existingUser = await spark.kv.get<GitHubUser>(userKey);
+    if (!existingUser || existingUser.login !== user.login || existingUser.avatar_url !== user.avatar_url) {
+      await spark.kv.set(userKey, user);
+    }
+    
+    // Mark this player as having data for leaderboard purposes
+    const playerKey = `player:${user.id}`;
+    await spark.kv.set(playerKey, { lastActive: Date.now() });
   } catch (error) {
     console.error('Failed to save game result:', error);
   }
@@ -154,6 +165,17 @@ export async function saveGameResult(game: GameResult): Promise<void> {
 
 export async function loadPlayerStats(userId: number): Promise<PlayerStats> {
   try {
+    // Ensure user data is saved for leaderboard if this is the current user
+    const currentUser = await getCurrentUser();
+    if (currentUser && currentUser.id === userId) {
+      const userKey = `user:${userId}`;
+      const existingUser = await spark.kv.get<GitHubUser>(userKey);
+      if (!existingUser) {
+        await spark.kv.set(userKey, currentUser);
+        await spark.kv.set(`player:${userId}`, { lastActive: Date.now() });
+      }
+    }
+    
     // Try to get cached stats first
     const cachedStats = await spark.kv.get<PlayerStats>(`stats:${userId}`);
     if (cachedStats) {
@@ -187,6 +209,13 @@ export async function clearUserData(userId: number): Promise<void> {
   try {
     await spark.kv.delete(`games:${userId}`);
     await spark.kv.delete(`stats:${userId}`);
+    await spark.kv.delete(`user:${userId}`);
+    await spark.kv.delete(`player:${userId}`);
+    await spark.kv.delete(`rating:${userId}`);
+    
+    // Also invalidate leaderboard cache since this player's data changed
+    const { invalidateLeaderboardCache } = await import('./leaderboard');
+    await invalidateLeaderboardCache();
   } catch (error) {
     console.error('Failed to clear user data:', error);
   }
