@@ -28,7 +28,8 @@ export function SettingsModal() {
     setAIDifficulty,
     toggleHints,
     setSoundEnabled,
-    setSoundVolume
+    setSoundVolume,
+    setCapturePreviewsEnabled
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -66,6 +67,21 @@ export function SettingsModal() {
               id="hints"
               checked={settings.hintsEnabled}
               onCheckedChange={toggleHints}
+            />
+          </div>
+          
+          {/* Capture Previews */}
+          <div className="flex items-center justify-between">
+            <Label 
+              htmlFor="capturePreviews"
+              className="text-sm leading-relaxed"
+            >
+              {t('ui.capturePreviewsEnabled')}
+            </Label>
+            <Switch
+              id="capturePreviews"
+              checked={settings.capturePreviewsEnabled}
+              onCheckedChange={setCapturePreviewsEnabled}
             />
           </div>
           

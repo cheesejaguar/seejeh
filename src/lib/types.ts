@@ -114,6 +114,7 @@ export interface GameSettings {
   hintsEnabled: boolean;
   soundEnabled: boolean;
   soundVolume: number;
+  capturePreviewsEnabled: boolean;
 }
 
 export interface GameSession {

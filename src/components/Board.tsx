@@ -16,7 +16,8 @@ export function Board() {
     showHints,
     hoveredMove,
     previewCaptures,
-    setHoveredMove
+    setHoveredMove,
+    settings
   } = useGameStore();
   
   const handleCellClick = (cell: CellType) => {
@@ -28,6 +29,7 @@ export function Board() {
   };
   
   const isWouldBeCaptured = (cell: CellType): boolean => {
+    if (!settings.capturePreviewsEnabled) return false;
     return previewCaptures.some(capture => capture.r === cell.r && capture.c === cell.c);
   };
   

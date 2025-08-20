@@ -76,6 +76,7 @@ interface GameStore {
   setShowProfile: (show: boolean) => void;
   showToast: (message: string) => void;
   clearToast: () => void;
+  setCapturePreviewsEnabled: (enabled: boolean) => void;
   
   // Sound actions
   setSoundEnabled: (enabled: boolean) => void;
@@ -100,7 +101,8 @@ const defaultSettings: GameSettings = {
   },
   hintsEnabled: false,
   soundEnabled: true,
-  soundVolume: 0.5
+  soundVolume: 0.5,
+  capturePreviewsEnabled: true
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -669,6 +671,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ settings: newSettings });
     saveSettings(newSettings);
     soundSystem.setVolume(volume);
+  },
+  
+  setCapturePreviewsEnabled: (enabled: boolean) => {
+    const { settings } = get();
+    const newSettings = { ...settings, capturePreviewsEnabled: enabled };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
   },
   
   startGameSession: () => {

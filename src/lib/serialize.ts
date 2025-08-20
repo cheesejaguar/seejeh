@@ -62,7 +62,12 @@ export function loadSettings(): GameSettings | null {
   try {
     const serialized = localStorage.getItem(SETTINGS_STORAGE_KEY);
     if (serialized) {
-      return JSON.parse(serialized);
+      const settings = JSON.parse(serialized);
+      // Migrate old settings by adding missing properties with defaults
+      if (settings.capturePreviewsEnabled === undefined) {
+        settings.capturePreviewsEnabled = true;
+      }
+      return settings;
     }
   } catch (error) {
     console.warn('Failed to load settings:', error);
