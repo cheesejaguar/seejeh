@@ -39,9 +39,14 @@
 - **Success Criteria**: Each difficulty teaches specific aspects of the game while providing appropriate challenge
 
 ### Strategic Learning Interface
-- **What**: Optional move suggestions and AI reasoning display to help players understand optimal strategies
+- **What**: Optional hint system showing optimal moves with explanations, and AI reasoning display to help players understand strategies
 - **Why**: Transforms gameplay into an educational experience that builds mastery over time
-- **Success Criteria**: Players demonstrably improve their strategic thinking through AI interactions
+- **Success Criteria**: Players demonstrably improve their strategic thinking through hint system and AI interactions
+
+### Hint System
+- **What**: Optional overlay showing top 3 optimal moves with quality rankings and strategic explanations
+- **Why**: Helps players learn from AI analysis and understand strategic principles in real-time
+- **Success Criteria**: Hints improve player decision-making and provide educational value without being intrusive
 
 ### Adaptive AI Behavior
 - **What**: AI that adjusts its playing style based on game phase and strategic considerations

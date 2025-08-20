@@ -24,7 +24,8 @@ export function SettingsModal() {
     setShowSettings, 
     settings, 
     toggleVariant,
-    setAIDifficulty
+    setAIDifficulty,
+    toggleHints
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -48,6 +49,21 @@ export function SettingsModal() {
           <div className="flex items-center justify-between">
             <Label htmlFor="language">{t('language')}</Label>
             <LanguageSwitcher />
+          </div>
+          
+          {/* Hints */}
+          <div className="flex items-center justify-between">
+            <Label 
+              htmlFor="hints"
+              className="text-sm leading-relaxed"
+            >
+              {t('hints.enableHints')}
+            </Label>
+            <Switch
+              id="hints"
+              checked={settings.hintsEnabled}
+              onCheckedChange={toggleHints}
+            />
           </div>
           
           {/* AI Difficulty */}

@@ -13,7 +13,7 @@ import {
   isCenter
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
-import { getBestAIMove, isAITurn } from '../lib/ai';
+import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves } from '../lib/ai';
 
 interface GameStore {
   // Game state
@@ -28,6 +28,12 @@ interface GameStore {
   blockadeRemovalMode: boolean;
   aiThinking: boolean;
   
+  // Hint system
+  showHints: boolean;
+  currentHint: { move: any; score: number; description: string } | null;
+  topMoves: Array<{ move: any; score: number; description: string }>;
+  hintsEnabled: boolean;
+  
   // Actions
   newGame: () => void;
   loadSavedGame: () => void;
@@ -41,6 +47,11 @@ interface GameStore {
   // AI actions
   makeAIMove: () => Promise<void>;
   checkForAITurn: () => void;
+  
+  // Hint actions
+  toggleHints: () => void;
+  getHint: () => void;
+  clearHints: () => void;
   
   // UI actions
   setLanguage: (language: Language) => void;
@@ -63,7 +74,8 @@ const defaultSettings: GameSettings = {
     firstMoveMustEnterCenter: false,
     antiShuttle: false,
     blockadeOneRemoval: true
-  }
+  },
+  hintsEnabled: false
 };
 
 export const useGameStore = create<GameStore>((set, get) => ({
@@ -75,6 +87,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   toastMessage: null,
   blockadeRemovalMode: false,
   aiThinking: false,
+  
+  // Hint system
+  showHints: false,
+  currentHint: null,
+  topMoves: [],
+  hintsEnabled: (loadSettings() || defaultSettings).hintsEnabled,
 
   newGame: () => {
     const { settings } = get();
@@ -83,7 +101,10 @@ export const useGameStore = create<GameStore>((set, get) => ({
       gameState: newState, 
       selectedCell: null,
       blockadeRemovalMode: false,
-      aiThinking: false
+      aiThinking: false,
+      showHints: false,
+      currentHint: null,
+      topMoves: []
     });
     saveGameState(newState);
     
@@ -117,6 +138,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
     
     if (gameState.phase === 'placement') {
       get().placeStone(cell);
+      // Clear hints after move
+      get().clearHints();
       return;
     }
     
@@ -139,6 +162,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
       } else {
         get().moveStone(selectedCell, cell);
       }
+      // Clear hints after move
+      get().clearHints();
     }
   },
 
@@ -321,6 +346,57 @@ export const useGameStore = create<GameStore>((set, get) => ({
     if (isAITurn(gameState, settings.players)) {
       get().makeAIMove();
     }
+  },
+
+  // Hint Actions
+  toggleHints: () => {
+    const { hintsEnabled } = get();
+    const newHintsEnabled = !hintsEnabled;
+    const newSettings = { ...get().settings, hintsEnabled: newHintsEnabled };
+    set({ 
+      hintsEnabled: newHintsEnabled,
+      settings: newSettings,
+      showHints: false,
+      currentHint: null,
+      topMoves: []
+    });
+    saveSettings(newSettings);
+  },
+
+  getHint: () => {
+    const { gameState, settings, aiThinking } = get();
+    
+    // Don't show hints during AI turn or when AI is thinking
+    if (aiThinking || isAITurn(gameState, settings.players) || gameState.winner) {
+      return;
+    }
+    
+    try {
+      const topMoves = getTopMoves(gameState, 3);
+      const optimalMove = topMoves[0] || null;
+      
+      set({ 
+        showHints: true,
+        currentHint: optimalMove,
+        topMoves
+      });
+      
+      if (optimalMove) {
+        get().showToast(`Hint: ${optimalMove.description}`);
+      } else {
+        get().showToast('No moves available');
+      }
+    } catch (error) {
+      get().showToast('Could not generate hint');
+    }
+  },
+
+  clearHints: () => {
+    set({ 
+      showHints: false,
+      currentHint: null,
+      topMoves: []
+    });
   },
 
   setLanguage: (language: Language) => {

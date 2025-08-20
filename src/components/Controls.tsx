@@ -4,6 +4,7 @@ import React from 'react';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
+import { HintsPanel } from './HintsPanel';
 import { useGameStore } from '../state/gameStore';
 import { countStones } from '../lib/rules';
 import { useTranslation } from '../hooks/useTranslation';
@@ -170,6 +171,9 @@ export function Controls() {
           )}
         </CardContent>
       </Card>
+      
+      {/* Hints Panel */}
+      <HintsPanel />
     </div>
   );
 }

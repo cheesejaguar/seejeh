@@ -51,6 +51,28 @@
     "noMovesAvailable": "No moves available",
     "aiMoveError": "AI move failed"
   },
+  "hints": {
+    "title": "Hints",
+    "getHint": "Get Hint",
+    "showHints": "Show Hints",
+    "hideHints": "Hide Hints",
+    "enableHints": "Enable Hints",
+    "optimalMove": "Optimal Move",
+    "topMoves": "Top Moves",
+    "moveQuality": {
+      "excellent": "Excellent",
+      "good": "Good",
+      "okay": "Okay"
+    },
+    "descriptions": {
+      "capturesStones": "Captures {{count}} stones",
+      "secureCenter": "Secure center position", 
+      "improvesMobility": "Improves mobility",
+      "strengthensPosition": "Strengthens position",
+      "nearCenter": "Near center position",
+      "strategicPlacement": "Strategic placement"
+    }
+  },
   "about": {
     "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. This digital version features intelligent AI opponents with adjustable difficulty levels, allowing you to learn and master this traditional strategic game at your own pace.",
     "rules": {

@@ -387,3 +387,99 @@ export function getBestAIMove(state: GameState, difficulty: AIDifficulty): AIMov
 export function isAITurn(state: GameState, playerConfigs: { Light: { type: 'human' | 'ai' }; Dark: { type: 'human' | 'ai' } }): boolean {
   return playerConfigs[state.current].type === 'ai';
 }
+
+/**
+ * Get the best move for hints - always use high difficulty for optimal analysis
+ */
+export function getOptimalMove(state: GameState): AIMove | null {
+  const config = DIFFICULTY_CONFIGS.hard; // Always use highest difficulty for hints
+  const moves = generateAllMoves(state);
+  
+  if (moves.length === 0) {
+    return null;
+  }
+  
+  let bestMove = moves[0];
+  let bestScore = -Infinity;
+  
+  for (const move of moves) {
+    const newState = applyMoveToState(state, move);
+    
+    // Evaluate immediate captures first
+    if (move.type === 'movement') {
+      const captures = resolveCaptures(newState, move.to!);
+      if (captures.captured.length > 0) {
+        bestScore += captures.captured.length * config.weights.captures;
+      }
+    }
+    
+    const score = minimax(
+      newState, 
+      config.depth - 1, 
+      false, 
+      state.current, 
+      config.weights
+    );
+    
+    if (score > bestScore) {
+      bestScore = score;
+      bestMove = move;
+    }
+  }
+  
+  return bestMove;
+}
+
+/**
+ * Get top 3 best moves for hints with scores
+ */
+export function getTopMoves(state: GameState, count: number = 3): Array<{ move: AIMove; score: number; description: string }> {
+  const config = DIFFICULTY_CONFIGS.hard;
+  const moves = generateAllMoves(state);
+  
+  if (moves.length === 0) {
+    return [];
+  }
+  
+  const scoredMoves = moves.map(move => {
+    const newState = applyMoveToState(state, move);
+    let score = minimax(newState, config.depth - 1, false, state.current, config.weights);
+    
+    let description = '';
+    
+    // Add immediate capture bonus and description
+    if (move.type === 'movement') {
+      const captures = resolveCaptures(newState, move.to!);
+      if (captures.captured.length > 0) {
+        score += captures.captured.length * config.weights.captures;
+        description = `Captures ${captures.captured.length} stone${captures.captured.length > 1 ? 's' : ''}`;
+      } else {
+        // Analyze positional benefits
+        if (isCenter(move.to!)) {
+          description = 'Secure center position';
+        } else {
+          const mobility = calculateMobility(newState, state.current);
+          if (mobility > calculateMobility(state, state.current)) {
+            description = 'Improves mobility';
+          } else {
+            description = 'Strengthens position';
+          }
+        }
+      }
+    } else {
+      // Placement description
+      if (move.cells[0] && Math.abs(move.cells[0].r - 3) + Math.abs(move.cells[0].c - 3) <= 2) {
+        description = 'Near center position';
+      } else {
+        description = 'Strategic placement';
+      }
+    }
+    
+    return { move, score, description };
+  });
+  
+  // Sort by score descending and take top moves
+  return scoredMoves
+    .sort((a, b) => b.score - a.score)
+    .slice(0, count);
+}

@@ -56,4 +56,5 @@ export interface GameSettings {
     Light: PlayerConfig;
     Dark: PlayerConfig;
   };
+  hintsEnabled: boolean;
 }

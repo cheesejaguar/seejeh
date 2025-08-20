@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { Cell } from './Cell';
+import { HintOverlay } from './HintOverlay';
 import { useGameStore } from '../state/gameStore';
 import { movesFor, placementsFor } from '../lib/rules';
 import { Cell as CellType } from '../lib/types';
@@ -11,7 +12,8 @@ export function Board() {
     gameState,
     selectedCell,
     selectCell,
-    blockadeRemovalMode
+    blockadeRemovalMode,
+    showHints
   } = useGameStore();
   
   const handleCellClick = (cell: CellType) => {
@@ -55,15 +57,17 @@ export function Board() {
         row.map((player, c) => {
           const cell = { r, c };
           return (
-            <Cell
-              key={`${r}-${c}`}
-              cell={cell}
-              player={player}
-              isSelected={isSelected(cell)}
-              isValidMove={isValidMove(cell) || isRemovableInBlockade(cell)}
-              onClick={handleCellClick}
-              className={isRemovableInBlockade(cell) ? 'removable' : ''}
-            />
+            <div key={`${r}-${c}`} className="relative">
+              <Cell
+                cell={cell}
+                player={player}
+                isSelected={isSelected(cell)}
+                isValidMove={isValidMove(cell) || isRemovableInBlockade(cell)}
+                onClick={handleCellClick}
+                className={isRemovableInBlockade(cell) ? 'removable' : ''}
+              />
+              {showHints && <HintOverlay cell={cell} />}
+            </div>
           );
         })
       )}
