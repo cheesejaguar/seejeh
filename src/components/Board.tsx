@@ -25,7 +25,7 @@ export function Board() {
       return placementsFor(gameState, gameState.current);
     }
     
-    if (selectedCell) {
+    if (selectedCell && (gameState.phase === 'movement' || gameState.phase === 'chain')) {
       return movesFor(gameState, selectedCell);
     }
     
@@ -38,6 +38,15 @@ export function Board() {
     return validMoves.some(move => move.r === cell.r && move.c === cell.c);
   };
   
+  const isValidPlacement = (cell: CellType): boolean => {
+    return gameState.phase === 'placement' && isValidMove(cell);
+  };
+  
+  const isValidPieceMove = (cell: CellType): boolean => {
+    return (gameState.phase === 'movement' || gameState.phase === 'chain') && 
+           selectedCell && isValidMove(cell);
+  };
+  
   const isSelected = (cell: CellType): boolean => {
     return selectedCell?.r === cell.r && selectedCell?.c === cell.c;
   };
@@ -45,6 +54,12 @@ export function Board() {
   const isRemovableInBlockade = (cell: CellType): boolean => {
     if (!blockadeRemovalMode) return false;
     return gameState.board[cell.r][cell.c] === gameState.current;
+  };
+  
+  const isMovablePiece = (cell: CellType): boolean => {
+    if (gameState.phase !== 'movement') return false;
+    if (gameState.board[cell.r][cell.c] !== gameState.current) return false;
+    return movesFor(gameState, cell).length > 0;
   };
   
   return (
@@ -62,7 +77,10 @@ export function Board() {
                 cell={cell}
                 player={player}
                 isSelected={isSelected(cell)}
-                isValidMove={isValidMove(cell) || isRemovableInBlockade(cell)}
+                isValidMove={isRemovableInBlockade(cell)}
+                isValidPlacement={isValidPlacement(cell)}
+                isValidPieceMove={isValidPieceMove(cell)}
+                isMovablePiece={isMovablePiece(cell)}
                 onClick={handleCellClick}
                 className={isRemovableInBlockade(cell) ? 'removable' : ''}
               />

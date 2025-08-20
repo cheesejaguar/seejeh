@@ -10,6 +10,9 @@ interface CellProps {
   player: Player | null;
   isSelected: boolean;
   isValidMove: boolean;
+  isValidPlacement?: boolean;
+  isValidPieceMove?: boolean;
+  isMovablePiece?: boolean;
   onClick: (cell: CellType) => void;
   className?: string;
 }
@@ -19,6 +22,9 @@ export function Cell({
   player,
   isSelected,
   isValidMove,
+  isValidPlacement = false,
+  isValidPieceMove = false,
+  isMovablePiece = false,
   onClick,
   className
 }: CellProps) {
@@ -40,20 +46,23 @@ export function Cell({
         isCenterCell && 'center',
         isSelected && 'selected',
         isValidMove && 'valid-move',
+        isValidPlacement && 'valid-placement',
+        isValidPieceMove && 'valid-piece-move',
         className
       )}
       onClick={handleClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
       role="button"
-      aria-label={`Cell ${cell.r + 1}, ${cell.c + 1}${isCenterCell ? ' (center, safe)' : ''}${player ? ` - ${player} stone` : ' - empty'}`}
+      aria-label={`Cell ${cell.r + 1}, ${cell.c + 1}${isCenterCell ? ' (center, safe)' : ''}${player ? ` - ${player} stone` : ' - empty'}${isMovablePiece ? ' - can be moved' : ''}${isValidPlacement ? ' - can place stone' : ''}${isValidPieceMove ? ' - can move here' : ''}${isValidMove ? ' - valid action' : ''}`}
     >
       {player && (
         <div
           className={cn(
             'seejeh-stone',
             player.toLowerCase(),
-            isSelected && 'selected'
+            isSelected && 'selected',
+            isMovablePiece && !isSelected && 'movable'
           )}
           aria-hidden="true"
         >
