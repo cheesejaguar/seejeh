@@ -38,6 +38,10 @@
   "endTurn": "End Turn",
   "winner": "{{player}} Wins!",
   "gameOver": "Game Over",
+  "winReason": {
+    "stoneCount": "{{opponent}} reduced to {{count}} stones",
+    "threshold": "Victory achieved at {{threshold}} stone threshold"
+  },
   "stalemate": "Declare Stalemate",
   "variant": {
     "firstMoveMustEnterCenter": "First move must enter center",

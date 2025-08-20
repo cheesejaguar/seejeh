@@ -243,9 +243,10 @@ export function applyMove(state: GameState, from: Cell, to: Cell): GameState {
   }
   
   // Check win condition
-  const winner = checkWin(newState);
-  if (winner) {
-    newState.winner = winner;
+  const winResult = checkWin(newState);
+  if (winResult) {
+    newState.winner = winResult.winner;
+    newState.winReason = winResult.reason;
   }
   
   return newState;
@@ -418,12 +419,33 @@ export function invokeBlockadeIfAny(state: GameState, removeCell?: Cell): GameSt
 /**
  * Check win condition
  */
-export function checkWin(state: GameState): Player | undefined {
+export function checkWin(state: GameState): { winner: Player; reason: GameState['winReason'] } | undefined {
   const lightCount = countStones(state, 'Light');
   const darkCount = countStones(state, 'Dark');
   
-  if (lightCount <= WIN_THRESHOLD) return 'Dark';
-  if (darkCount <= WIN_THRESHOLD) return 'Light';
+  if (lightCount <= WIN_THRESHOLD) {
+    return {
+      winner: 'Dark',
+      reason: {
+        type: 'stoneCount',
+        loserStoneCount: lightCount,
+        threshold: WIN_THRESHOLD,
+        loser: 'Light'
+      }
+    };
+  }
+  
+  if (darkCount <= WIN_THRESHOLD) {
+    return {
+      winner: 'Light', 
+      reason: {
+        type: 'stoneCount',
+        loserStoneCount: darkCount,
+        threshold: WIN_THRESHOLD,
+        loser: 'Dark'
+      }
+    };
+  }
   
   return undefined;
 }

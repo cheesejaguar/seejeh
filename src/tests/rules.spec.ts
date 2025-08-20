@@ -211,7 +211,7 @@ describe('Seejeh Rules Engine', () => {
         state.board[1][i % 7] = 'Light';
       }
       
-      expect(checkWin(state)).toBe('Light');
+      expect(checkWin(state)?.winner).toBe('Light');
     });
 
     it('should count stones correctly', () => {

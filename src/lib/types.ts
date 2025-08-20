@@ -32,6 +32,12 @@ export interface GameState {
   moveHistory: MoveRecord[];
   variant: VariantFlags;
   winner?: Player;
+  winReason?: {
+    type: 'stoneCount';
+    loserStoneCount: number;
+    threshold: number;
+    loser: Player;
+  };
   placementCount: number; // Count of stones placed this turn during placement phase
   capturedLastMove: Cell[]; // Stones captured in the last move
 }

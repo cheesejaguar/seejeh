@@ -84,9 +84,9 @@ function evaluatePosition(state: GameState, player: Player, weights: EvaluationW
   const opponent = player === 'Light' ? 'Dark' : 'Light';
   
   // Check for immediate win/loss
-  const winner = checkWin(state);
-  if (winner === player) return 10000;
-  if (winner === opponent) return -10000;
+  const winResult = checkWin(state);
+  if (winResult?.winner === player) return 10000;
+  if (winResult?.winner === opponent) return -10000;
   
   let score = 0;
   
@@ -208,7 +208,7 @@ function minimax(
   alpha: number = -Infinity,
   beta: number = Infinity
 ): number {
-  if (depth === 0 || checkWin(state)) {
+  if (depth === 0 || checkWin(state) !== undefined) {
     return evaluatePosition(state, player, weights);
   }
   

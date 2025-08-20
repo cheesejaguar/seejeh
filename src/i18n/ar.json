@@ -38,6 +38,10 @@
   "endTurn": "إنهاء الدور",
   "winner": "{{player}} فاز!",
   "gameOver": "انتهت اللعبة",
+  "winReason": {
+    "stoneCount": "{{opponent}} انخفض إلى {{count}} أحجار",
+    "threshold": "تم تحقيق النصر عند عتبة {{threshold}} حجر"
+  },
   "stalemate": "إعلان التعادل",
   "variant": {
     "firstMoveMustEnterCenter": "الحركة الأولى يجب أن تدخل المركز",

@@ -196,11 +196,31 @@ export function Controls() {
           )}
           
           {gameState.winner && (
-            <div className="text-center p-4 bg-primary/10 rounded-lg">
-              <div className="text-lg font-semibold text-primary">
-                {t('winner', { player: t(`player.${gameState.winner}`) })}
+            <div className="win-announcement text-center p-6 bg-primary/10 rounded-lg border-2 border-primary/30 shadow-lg">
+              <div className="flex items-center justify-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
+                  <span className="text-primary-foreground text-sm font-bold">🏆</span>
+                </div>
+                <div className="text-xl font-bold text-primary">
+                  {t('winner', { player: t(`player.${gameState.winner}`) })}
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
+              
+              {gameState.winReason && (
+                <div className="bg-background/50 rounded-md p-3 mb-3 border border-border">
+                  <div className="text-sm font-medium text-foreground mb-1">
+                    {t('winReason.stoneCount', {
+                      opponent: t(`player.${gameState.winReason.loser}`),
+                      count: gameState.winReason.loserStoneCount
+                    })}
+                  </div>
+                  <div className="text-xs text-muted-foreground">
+                    {t('winReason.threshold', { threshold: gameState.winReason.threshold })}
+                  </div>
+                </div>
+              )}
+              
+              <div className="text-sm text-muted-foreground">
                 {t('gameOver')}
               </div>
             </div>

@@ -322,6 +322,24 @@
   }
 }
 
+@keyframes win-celebration {
+  0% { 
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% { 
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.win-announcement {
+  animation: win-celebration 0.6s ease-out;
+}
+
 /* RTL support */
 [dir="rtl"] {
   font-family: 'Cairo', system-ui, sans-serif;
@@ -365,5 +383,9 @@
     animation: none;
     opacity: 0.5;
     border: 2px solid var(--destructive);
+  }
+  
+  .win-announcement {
+    animation: none;
   }
 }
