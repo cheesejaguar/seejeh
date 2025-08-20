@@ -1,7 +1,7 @@
 // FILE: src/state/gameStore.ts
 
 import { create } from 'zustand';
-import { GameState, Language, GameSettings, Cell, Player } from '../lib/types';
+import { GameState, Language, GameSettings, Cell, Player, GameMode, AIDifficulty } from '../lib/types';
 import { 
   initialState7x7, 
   applyPlacement, 
@@ -13,6 +13,7 @@ import {
   isCenter
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
+import { getBestAIMove, isAITurn } from '../lib/ai';
 
 interface GameStore {
   // Game state
@@ -25,6 +26,7 @@ interface GameStore {
   showSettings: boolean;
   toastMessage: string | null;
   blockadeRemovalMode: boolean;
+  aiThinking: boolean;
   
   // Actions
   newGame: () => void;
@@ -36,8 +38,14 @@ interface GameStore {
   endChainCapture: () => void;
   removeBlockadeStone: (cell: Cell) => void;
   
+  // AI actions
+  makeAIMove: () => Promise<void>;
+  checkForAITurn: () => void;
+  
   // UI actions
   setLanguage: (language: Language) => void;
+  setGameMode: (mode: GameMode) => void;
+  setAIDifficulty: (difficulty: AIDifficulty) => void;
   toggleVariant: (variant: keyof GameSettings['variant']) => void;
   setShowAbout: (show: boolean) => void;
   setShowSettings: (show: boolean) => void;
@@ -47,6 +55,12 @@ interface GameStore {
 
 const defaultSettings: GameSettings = {
   language: 'en',
+  gameMode: 'human-vs-human',
+  aiDifficulty: 'medium',
+  players: {
+    Light: { type: 'human' },
+    Dark: { type: 'human' }
+  },
   variant: {
     firstMoveMustEnterCenter: false,
     antiShuttle: false,
@@ -62,6 +76,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   showSettings: false,
   toastMessage: null,
   blockadeRemovalMode: false,
+  aiThinking: false,
 
   newGame: () => {
     const { settings } = get();
@@ -69,9 +84,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ 
       gameState: newState, 
       selectedCell: null,
-      blockadeRemovalMode: false 
+      blockadeRemovalMode: false,
+      aiThinking: false
     });
     saveGameState(newState);
+    
+    // Check if AI should move first
+    setTimeout(() => get().checkForAITurn(), 100);
   },
 
   loadSavedGame: () => {
@@ -80,13 +99,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
       set({ 
         gameState: saved, 
         selectedCell: null,
-        blockadeRemovalMode: !hasAnyLegalMove(saved, saved.current)
+        blockadeRemovalMode: !hasAnyLegalMove(saved, saved.current),
+        aiThinking: false
       });
+      
+      // Check if it's AI's turn after loading
+      setTimeout(() => get().checkForAITurn(), 100);
     }
   },
 
   selectCell: (cell: Cell) => {
-    const { gameState, selectedCell } = get();
+    const { gameState, selectedCell, settings, aiThinking } = get();
+    
+    // Don't allow interaction during AI thinking
+    if (aiThinking) return;
+    
+    // Don't allow interaction if it's AI's turn
+    if (isAITurn(gameState, settings.players)) return;
     
     if (gameState.phase === 'placement') {
       get().placeStone(cell);
@@ -152,6 +181,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         
         set({ gameState: newState });
         saveGameState(newState);
+        
+        // Check for AI turn after placement
+        setTimeout(() => get().checkForAITurn(), 300);
       }
     } catch (error) {
       get().showToast((error as Error).message);
@@ -177,6 +209,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (newState.capturedLastMove.length > 0) {
         get().showToast(`Captured ${newState.capturedLastMove.length} stones`);
       }
+      
+      // Check for AI turn after human move
+      setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
     }
@@ -193,6 +228,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       if (newState.capturedLastMove.length > 0) {
         get().showToast(`Captured ${newState.capturedLastMove.length} stones`);
       }
+      
+      // Check for AI turn after chain step
+      setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
     }
@@ -211,6 +249,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
         blockadeRemovalMode: needsBlockadeResolution && !newState.winner
       });
       saveGameState(newState);
+      
+      // Check for AI turn after chain end
+      setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
     }
@@ -228,8 +269,59 @@ export const useGameStore = create<GameStore>((set, get) => ({
       });
       saveGameState(newState);
       get().showToast('Blockade stone removed');
+      
+      // Check for AI turn after blockade resolution
+      setTimeout(() => get().checkForAITurn(), 300);
     } catch (error) {
       get().showToast((error as Error).message);
+    }
+  },
+
+  // AI Actions
+  makeAIMove: async () => {
+    const { gameState, settings } = get();
+    
+    if (!isAITurn(gameState, settings.players) || gameState.winner) {
+      return;
+    }
+    
+    set({ aiThinking: true });
+    
+    try {
+      // Add a small delay to show thinking state
+      await new Promise(resolve => setTimeout(resolve, 500 + Math.random() * 1000));
+      
+      const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
+      
+      if (!aiMove) {
+        set({ aiThinking: false });
+        return;
+      }
+      
+      if (aiMove.type === 'placement') {
+        // AI placement
+        get().placeStone(aiMove.cells[0]);
+      } else if (aiMove.from && aiMove.to) {
+        // AI movement
+        get().moveStone(aiMove.from, aiMove.to);
+      }
+      
+      set({ aiThinking: false });
+    } catch (error) {
+      set({ aiThinking: false });
+      get().showToast('AI move failed');
+    }
+  },
+
+  checkForAITurn: () => {
+    const { gameState, settings, aiThinking, blockadeRemovalMode } = get();
+    
+    if (aiThinking || blockadeRemovalMode || gameState.winner) {
+      return;
+    }
+    
+    if (isAITurn(gameState, settings.players)) {
+      get().makeAIMove();
     }
   },
 
@@ -241,6 +333,40 @@ export const useGameStore = create<GameStore>((set, get) => ({
     // Update document direction
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
+  },
+
+  setGameMode: (mode: GameMode) => {
+    const { settings } = get();
+    const newSettings = {
+      ...settings,
+      gameMode: mode,
+      players: mode === 'human-vs-ai' ? {
+        Light: { type: 'human' },
+        Dark: { type: 'ai', difficulty: settings.aiDifficulty }
+      } : {
+        Light: { type: 'human' },
+        Dark: { type: 'human' }
+      }
+    };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
+    
+    // Start a new game when mode changes
+    get().newGame();
+  },
+
+  setAIDifficulty: (difficulty: AIDifficulty) => {
+    const { settings } = get();
+    const newSettings = {
+      ...settings,
+      aiDifficulty: difficulty,
+      players: settings.gameMode === 'human-vs-ai' ? {
+        Light: { type: 'human' },
+        Dark: { type: 'ai', difficulty }
+      } : settings.players
+    };
+    set({ settings: newSettings });
+    saveSettings(newSettings);
   },
 
   toggleVariant: (variant: keyof GameSettings['variant']) => {

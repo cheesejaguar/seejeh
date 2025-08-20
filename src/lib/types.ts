@@ -42,7 +42,21 @@ export interface CaptureResult {
 
 export type Language = 'en' | 'ar';
 
+export type GameMode = 'human-vs-human' | 'human-vs-ai';
+export type AIDifficulty = 'easy' | 'medium' | 'hard';
+
+export interface PlayerConfig {
+  type: 'human' | 'ai';
+  difficulty?: AIDifficulty;
+}
+
 export interface GameSettings {
   language: Language;
   variant: VariantFlags;
+  gameMode: GameMode;
+  aiDifficulty: AIDifficulty;
+  players: {
+    Light: PlayerConfig;
+    Dark: PlayerConfig;
+  };
 }

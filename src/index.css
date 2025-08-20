@@ -129,6 +129,11 @@
   50% { opacity: 0.6; }
 }
 
+@keyframes thinking {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
 .seejeh-stone {
   width: 80%;
   height: 80%;

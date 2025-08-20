@@ -6,6 +6,8 @@
   "about": "About",
   "rules": "Rules",
   "language": "Language",
+  "gameMode": "Game Mode",
+  "difficulty": "AI Difficulty",
   "currentPlayer": "Current Player",
   "phase": {
     "placement": "Placement Phase",
@@ -16,6 +18,16 @@
     "Light": "Light",
     "Dark": "Dark"
   },
+  "mode": {
+    "human-vs-human": "Human vs Human",
+    "human-vs-ai": "Human vs AI"
+  },
+  "aiDifficulty": {
+    "easy": "Easy",
+    "medium": "Medium", 
+    "hard": "Hard"
+  },
+  "aiThinking": "AI thinking...",
   "stonesToPlace": "Stones to Place",
   "placementInstructions": "Place 2 stones per turn",
   "movementInstructions": "Move one stone orthogonally",
@@ -35,7 +47,8 @@
     "blockade": "Player blocked - opponent removes one stone",
     "mustPlaceTwo": "Must place 2 stones per turn",
     "selectPieceFirst": "Select a piece to move",
-    "noMovesAvailable": "No moves available"
+    "noMovesAvailable": "No moves available",
+    "aiMoveError": "AI move failed"
   },
   "about": {
     "history": "Seejeh (also known as Seega) is an ancient Egyptian board game with roots dating back thousands of years. The game was played in various forms throughout North Africa and the Middle East, representing one of humanity's oldest strategic games.",
