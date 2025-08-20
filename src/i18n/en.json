@@ -37,12 +37,26 @@
   "endChain": "End Chain",
   "endTurn": "End Turn",
   "winner": "{{player}} Wins!",
+  "draw": "Game is a Draw!",
   "gameOver": "Game Over",
   "winReason": {
     "stoneCount": "{{opponent}} reduced to {{count}} stones",
-    "threshold": "Victory achieved at {{threshold}} stone threshold"
+    "threshold": "Victory achieved at {{threshold}} stone threshold",
+    "resignation": "{{player}} resigned",
+    "stalemate": {
+      "mutual": "Stalemate by mutual agreement",
+      "repetition": "Stalemate by position repetition", 
+      "insufficient": "Stalemate - insufficient material to continue"
+    }
   },
   "stalemate": "Declare Stalemate",
+  "resignation": "Resign Game",
+  "stalemateOffer": {
+    "offered": "Stalemate Offered",
+    "accept": "Accept Stalemate",
+    "reject": "Reject Stalemate",
+    "description": "Both players agree to end the game. Winner determined by stone count."
+  },
   "variant": {
     "firstMoveMustEnterCenter": "First move must enter center",
     "antiShuttle": "Anti-shuttle rule",

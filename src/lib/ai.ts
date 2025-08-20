@@ -483,3 +483,104 @@ export function getTopMoves(state: GameState, count: number = 3): Array<{ move: 
     .sort((a, b) => b.score - a.score)
     .slice(0, count);
 }
+
+/**
+ * Decide if AI should accept a stalemate offer
+ */
+export function shouldAIAcceptStalemate(state: GameState, difficulty: AIDifficulty): boolean {
+  const aiPlayer = state.current;
+  const humanPlayer = aiPlayer === 'Light' ? 'Dark' : 'Light';
+  
+  const aiStones = countStones(state, aiPlayer);
+  const humanStones = countStones(state, humanPlayer);
+  
+  // Basic decision factors
+  const stoneDifference = aiStones - humanStones;
+  const totalStones = aiStones + humanStones;
+  
+  // If AI is significantly behind, more likely to accept
+  if (stoneDifference <= -3) {
+    return true;
+  }
+  
+  // If AI is ahead, less likely to accept unless game is nearly over
+  if (stoneDifference >= 2 && totalStones > 12) {
+    return false;
+  }
+  
+  // Check mobility
+  const aiMobility = calculateMobility(state, aiPlayer);
+  const humanMobility = calculateMobility(state, humanPlayer);
+  
+  // If AI has no moves and human does, accept stalemate
+  if (aiMobility === 0 && humanMobility > 0) {
+    return true;
+  }
+  
+  // Difficulty-based decision making
+  switch (difficulty) {
+    case 'beginner':
+      // More likely to accept, especially if close
+      return Math.abs(stoneDifference) <= 2 || totalStones <= 10;
+      
+    case 'easy':
+      // Moderate decision making
+      return stoneDifference <= 0 || (totalStones <= 8 && Math.abs(stoneDifference) <= 1);
+      
+    case 'medium':
+      // More strategic, only accept if behind or very close game
+      return stoneDifference < 0 || (totalStones <= 6 && stoneDifference <= 1);
+      
+    case 'hard':
+      // Only accept if clearly losing or truly stalemated
+      return stoneDifference <= -2 || (aiMobility === 0 && totalStones <= 8);
+      
+    default:
+      return false;
+  }
+}
+
+/**
+ * Decide if AI should offer a stalemate
+ */
+export function shouldAIOfferStalemate(state: GameState, difficulty: AIDifficulty): boolean {
+  const aiPlayer = state.current;
+  const humanPlayer = aiPlayer === 'Light' ? 'Dark' : 'Light';
+  
+  const aiStones = countStones(state, aiPlayer);
+  const humanStones = countStones(state, humanPlayer);
+  const totalStones = aiStones + humanStones;
+  
+  // Only consider offering stalemate in movement phase
+  if (state.phase !== 'movement') {
+    return false;
+  }
+  
+  // Don't offer if AI is winning significantly
+  if (aiStones - humanStones >= 3) {
+    return false;
+  }
+  
+  // Check for low material situations
+  if (totalStones <= 8) {
+    const aiMobility = calculateMobility(state, aiPlayer);
+    const humanMobility = calculateMobility(state, humanPlayer);
+    
+    // If both players have very limited mobility
+    if (aiMobility <= 1 && humanMobility <= 1) {
+      return true;
+    }
+    
+    // If AI is slightly behind in a low-material endgame
+    if (aiStones === humanStones - 1 && totalStones <= 6) {
+      return difficulty === 'beginner' || difficulty === 'easy';
+    }
+  }
+  
+  // Check for repetitive position (simplified)
+  if (state.moveRepetition >= 4) {
+    return true;
+  }
+  
+  return false;
+}

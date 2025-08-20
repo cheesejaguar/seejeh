@@ -12,10 +12,14 @@ import {
   hasAnyLegalMove,
   isCenter,
   countStones,
-  previewCaptures
+  previewCaptures,
+  offerStalemate,
+  rejectStalemate,
+  resignGame,
+  detectStalemate
 } from '../lib/rules';
 import { saveGameState, loadGameState, saveSettings, loadSettings } from '../lib/serialize';
-import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves } from '../lib/ai';
+import { getBestAIMove, isAITurn, getOptimalMove, getTopMoves, shouldAIAcceptStalemate, shouldAIOfferStalemate } from '../lib/ai';
 import { soundSystem } from '../lib/soundSystem';
 
 interface GameStore {
@@ -53,6 +57,11 @@ interface GameStore {
   endChainCapture: () => void;
   endTurn: () => void;
   removeBlockadeStone: (cell: Cell) => void;
+  
+  // Stalemate and resignation actions
+  offerStalemate: () => void;
+  rejectStalemate: () => void;
+  resignGame: () => void;
   
   // AI actions
   makeAIMove: () => Promise<void>;
@@ -504,6 +513,31 @@ export const useGameStore = create<GameStore>((set, get) => ({
           }
         }
       } else {
+        // Check for stalemate decisions first
+        const humanPlayer = gameState.current === 'Light' ? 'Dark' : 'Light';
+        
+        // If human offered stalemate, decide whether to accept
+        if (gameState.stalemateOffers[humanPlayer]) {
+          const shouldAccept = shouldAIAcceptStalemate(gameState, settings.aiDifficulty);
+          
+          if (shouldAccept) {
+            get().offerStalemate(); // Accept by offering stalemate too
+            set({ aiThinking: false });
+            return;
+          } else {
+            get().rejectStalemate(); // Reject the offer
+            // Continue with normal move
+          }
+        }
+        
+        // Check if AI should offer stalemate
+        if (!gameState.stalemateOffers[gameState.current] && 
+            shouldAIOfferStalemate(gameState, settings.aiDifficulty)) {
+          get().offerStalemate();
+          set({ aiThinking: false });
+          return;
+        }
+        
         // Handle AI movement
         const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
         
@@ -687,7 +721,73 @@ export const useGameStore = create<GameStore>((set, get) => ({
     };
     set({ currentSession: session });
   },
-  
+
+  // Stalemate and resignation actions
+  offerStalemate: () => {
+    const { gameState, settings } = get();
+    
+    if (gameState.winner || isAITurn(gameState, settings.players)) {
+      return;
+    }
+    
+    try {
+      const newState = offerStalemate(gameState);
+      set({ gameState: newState, selectedCell: null });
+      saveGameState(newState);
+      
+      if (newState.winner !== undefined) {
+        get().showToast(newState.winner ? 'Stalemate accepted - game decided by stone count' : 'Stalemate - game is a draw');
+        get().endGameSession();
+      } else {
+        get().showToast('Stalemate offered - waiting for opponent response');
+      }
+      
+      soundSystem.play('move');
+    } catch (error) {
+      get().showToast((error as Error).message);
+      soundSystem.play('invalid');
+    }
+  },
+
+  rejectStalemate: () => {
+    const { gameState, settings } = get();
+    
+    if (gameState.winner || isAITurn(gameState, settings.players)) {
+      return;
+    }
+    
+    try {
+      const newState = rejectStalemate(gameState, gameState.current);
+      set({ gameState: newState });
+      saveGameState(newState);
+      get().showToast('Stalemate offer rejected - game continues');
+      soundSystem.play('move');
+    } catch (error) {
+      get().showToast((error as Error).message);
+      soundSystem.play('invalid');
+    }
+  },
+
+  resignGame: () => {
+    const { gameState, settings } = get();
+    
+    if (gameState.winner || isAITurn(gameState, settings.players)) {
+      return;
+    }
+    
+    try {
+      const newState = resignGame(gameState, gameState.current);
+      set({ gameState: newState, selectedCell: null });
+      saveGameState(newState);
+      get().showToast(`${gameState.current} player resigned`);
+      get().endGameSession();
+      soundSystem.play('capture'); // Use capture sound for dramatic effect
+    } catch (error) {
+      get().showToast((error as Error).message);
+      soundSystem.play('invalid');
+    }
+  },
+
   endGameSession: async () => {
     const { currentSession, gameState, settings } = get();
     if (!currentSession) return;
@@ -701,6 +801,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
         id: `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         timestamp: currentSession.startTime,
         winner: gameState.winner || null,
+        winReason: gameState.winReason,
         opponent: 'AI',
         aiDifficulty: settings.aiDifficulty,
         duration,

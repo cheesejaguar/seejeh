@@ -9,7 +9,7 @@ import { useGameStore } from '../state/gameStore';
 import { countStones, hasAnyLegalMove } from '../lib/rules';
 import { useTranslation } from '../hooks/useTranslation';
 import { isAITurn } from '../lib/ai';
-import { Settings, RotateCcw, Robot, ArrowRight } from '@phosphor-icons/react';
+import { Settings, RotateCcw, Robot, ArrowRight, Flag, Handshake } from '@phosphor-icons/react';
 
 export function Controls() {
   const {
@@ -20,7 +20,10 @@ export function Controls() {
     endTurn,
     setShowSettings,
     blockadeRemovalMode,
-    aiThinking
+    aiThinking,
+    offerStalemate,
+    rejectStalemate,
+    resignGame
   } = useGameStore();
   
   const { t } = useTranslation();
@@ -199,30 +202,110 @@ export function Controls() {
             <div className="win-announcement text-center p-6 bg-primary/10 rounded-lg border-2 border-primary/30 shadow-lg">
               <div className="flex items-center justify-center gap-2 mb-3">
                 <div className="w-6 h-6 bg-primary rounded-full flex items-center justify-center">
-                  <span className="text-primary-foreground text-sm font-bold">🏆</span>
+                  <span className="text-primary-foreground text-sm font-bold">
+                    {gameState.winner ? '🏆' : '🤝'}
+                  </span>
                 </div>
                 <div className="text-xl font-bold text-primary">
-                  {t('winner', { player: t(`player.${gameState.winner}`) })}
+                  {gameState.winner ? t('winner', { player: t(`player.${gameState.winner}`) }) : t('draw')}
                 </div>
               </div>
               
               {gameState.winReason && (
                 <div className="bg-background/50 rounded-md p-3 mb-3 border border-border">
                   <div className="text-sm font-medium text-foreground mb-1">
-                    {t('winReason.stoneCount', {
-                      opponent: t(`player.${gameState.winReason.loser}`),
-                      count: gameState.winReason.loserStoneCount
-                    })}
+                    {gameState.winReason.type === 'stoneCount' && (
+                      t('winReason.stoneCount', {
+                        opponent: t(`player.${gameState.winReason.loser}`),
+                        count: gameState.winReason.loserStoneCount
+                      })
+                    )}
+                    {gameState.winReason.type === 'resignation' && (
+                      t('winReason.resignation', {
+                        player: t(`player.${gameState.winReason.resignedPlayer}`)
+                      })
+                    )}
+                    {gameState.winReason.type === 'stalemate' && (
+                      t(`winReason.stalemate.${gameState.winReason.drawType}`)
+                    )}
                   </div>
-                  <div className="text-xs text-muted-foreground">
-                    {t('winReason.threshold', { threshold: gameState.winReason.threshold })}
-                  </div>
+                  {gameState.winReason.type === 'stoneCount' && (
+                    <div className="text-xs text-muted-foreground">
+                      {t('winReason.threshold', { threshold: 7 })}
+                    </div>
+                  )}
                 </div>
               )}
               
               <div className="text-sm text-muted-foreground">
                 {t('gameOver')}
               </div>
+            </div>
+          )}
+          
+          {/* Stalemate Offer Display */}
+          {!gameState.winner && (gameState.stalemateOffers.Light || gameState.stalemateOffers.Dark) && (
+            <div className="bg-accent/10 border border-accent/20 rounded-lg p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Handshake size={16} className="text-accent" />
+                <span className="font-medium text-accent">{t('stalemateOffer.offered')}</span>
+              </div>
+              <p className="text-sm text-muted-foreground mb-3">
+                {t('stalemateOffer.description')}
+              </p>
+              
+              {/* Show accept/reject buttons if opponent offered stalemate and it's human turn */}
+              {gameState.stalemateOffers[gameState.current === 'Light' ? 'Dark' : 'Light'] && 
+               !isCurrentAI && (
+                <div className="flex gap-2">
+                  <Button
+                    onClick={offerStalemate}
+                    variant="default"
+                    size="sm"
+                    className="flex-1 bg-accent hover:bg-accent/90"
+                    disabled={aiThinking}
+                  >
+                    <Handshake size={16} className="mr-2" />
+                    {t('stalemateOffer.accept')}
+                  </Button>
+                  <Button
+                    onClick={rejectStalemate}
+                    variant="outline"
+                    size="sm"
+                    className="flex-1"
+                    disabled={aiThinking}
+                  >
+                    {t('stalemateOffer.reject')}
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {/* Game Actions - only show during active game for human player */}
+          {!gameState.winner && !isCurrentAI && gameState.phase !== 'placement' && (
+            <div className="flex gap-2">
+              <Button
+                onClick={offerStalemate}
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                disabled={aiThinking || gameState.stalemateOffers[gameState.current]}
+              >
+                <Handshake size={16} className="mr-2" />
+                {t('stalemate')}
+              </Button>
+              
+              <Button
+                onClick={resignGame}
+                variant="outline"
+                size="sm"
+                className="flex-1 border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                disabled={aiThinking}
+              >
+                <Flag size={16} className="mr-2" />
+                {t('resignation')}
+              </Button>
             </div>
           )}
         </CardContent>

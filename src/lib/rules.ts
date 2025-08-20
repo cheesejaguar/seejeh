@@ -6,7 +6,8 @@ import {
   Cell, 
   VariantFlags, 
   CaptureResult, 
-  MoveRecord 
+  MoveRecord,
+  WinReason
 } from './types';
 
 const BOARD_SIZE = 7;
@@ -34,7 +35,12 @@ export function initialState7x7(variant: Partial<VariantFlags> = {}): GameState 
     moveHistory: [],
     variant: { ...defaultVariant, ...variant },
     placementCount: 0,
-    capturedLastMove: []
+    capturedLastMove: [],
+    stalemateOffers: {
+      Light: false,
+      Dark: false
+    },
+    moveRepetition: 0
   };
 }
 
@@ -233,6 +239,15 @@ export function applyMove(state: GameState, from: Cell, to: Cell): GameState {
     newState.board[captured.r][captured.c] = null;
   }
   
+  // Track board repetition for stalemate detection
+  const currentBoardHash = createBoardHash(newState);
+  if (currentBoardHash === state.lastBoardHash) {
+    newState.moveRepetition = state.moveRepetition + 1;
+  } else {
+    newState.moveRepetition = 0;
+  }
+  newState.lastBoardHash = currentBoardHash;
+  
   // If captures were made, enter chain mode with same player
   if (captureResult.captured.length > 0) {
     newState.phase = 'chain';
@@ -247,6 +262,12 @@ export function applyMove(state: GameState, from: Cell, to: Cell): GameState {
   if (winResult) {
     newState.winner = winResult.winner;
     newState.winReason = winResult.reason;
+  }
+  
+  // Check for automatic stalemate detection
+  const stalemateCheck = detectStalemate(newState);
+  if (stalemateCheck.winner !== undefined || stalemateCheck.winner === null) {
+    return stalemateCheck;
   }
   
   return newState;
@@ -419,7 +440,7 @@ export function invokeBlockadeIfAny(state: GameState, removeCell?: Cell): GameSt
 /**
  * Check win condition
  */
-export function checkWin(state: GameState): { winner: Player; reason: GameState['winReason'] } | undefined {
+export function checkWin(state: GameState): { winner: Player | null; reason: WinReason } | undefined {
   const lightCount = countStones(state, 'Light');
   const darkCount = countStones(state, 'Dark');
   
@@ -447,7 +468,150 @@ export function checkWin(state: GameState): { winner: Player; reason: GameState[
     };
   }
   
+  // Check for stalemate by mutual agreement
+  if (state.stalemateOffers.Light && state.stalemateOffers.Dark) {
+    const winner = lightCount > darkCount ? 'Light' : 
+                  darkCount > lightCount ? 'Dark' : null;
+    return {
+      winner,
+      reason: {
+        type: 'stalemate',
+        drawType: 'mutual'
+      }
+    };
+  }
+  
+  // Check for stalemate by repetition (simplified)
+  if (state.moveRepetition >= 6) {
+    const winner = lightCount > darkCount ? 'Light' : 
+                  darkCount > lightCount ? 'Dark' : null;
+    return {
+      winner,
+      reason: {
+        type: 'stalemate',
+        drawType: 'repetition'
+      }
+    };
+  }
+  
   return undefined;
+}
+
+/**
+ * Offer stalemate from current player
+ */
+export function offerStalemate(state: GameState): GameState {
+  const newState = { ...state };
+  newState.stalemateOffers = {
+    ...state.stalemateOffers,
+    [state.current]: true
+  };
+  
+  // Check if both players have now offered stalemate
+  const winResult = checkWin(newState);
+  if (winResult) {
+    newState.winner = winResult.winner;
+    newState.winReason = winResult.reason;
+  }
+  
+  return newState;
+}
+
+/**
+ * Reject stalemate offer
+ */
+export function rejectStalemate(state: GameState, player: Player): GameState {
+  const newState = { ...state };
+  newState.stalemateOffers = {
+    ...state.stalemateOffers,
+    [player]: false
+  };
+  return newState;
+}
+
+/**
+ * Resign the game
+ */
+export function resignGame(state: GameState, resigningPlayer: Player): GameState {
+  const winner = resigningPlayer === 'Light' ? 'Dark' : 'Light';
+  
+  return {
+    ...state,
+    winner,
+    winReason: {
+      type: 'resignation',
+      resignedPlayer: resigningPlayer
+    }
+  };
+}
+
+/**
+ * Create a hash of the board state for repetition detection
+ */
+export function createBoardHash(state: GameState): string {
+  return JSON.stringify({
+    board: state.board,
+    current: state.current,
+    phase: state.phase
+  });
+}
+
+/**
+ * Check for insufficient material (too few pieces to continue meaningfully)
+ */
+export function checkInsufficientMaterial(state: GameState): boolean {
+  const lightCount = countStones(state, 'Light');
+  const darkCount = countStones(state, 'Dark');
+  const totalStones = lightCount + darkCount;
+  
+  // If total stones on board is very low and no captures happened recently
+  return totalStones <= 6 && state.capturedLastMove.length === 0;
+}
+
+/**
+ * Detect if both players are unable to make progress
+ */
+export function detectStalemate(state: GameState): GameState {
+  if (state.phase !== 'movement') return state;
+  
+  const lightHasMoves = hasAnyLegalMove(state, 'Light');
+  const darkHasMoves = hasAnyLegalMove(state, 'Dark');
+  
+  // If neither player can move, it's a stalemate
+  if (!lightHasMoves && !darkHasMoves) {
+    const lightCount = countStones(state, 'Light');
+    const darkCount = countStones(state, 'Dark');
+    const winner = lightCount > darkCount ? 'Light' : 
+                  darkCount > lightCount ? 'Dark' : null;
+    
+    return {
+      ...state,
+      winner,
+      winReason: {
+        type: 'stalemate',
+        drawType: 'insufficient'
+      }
+    };
+  }
+  
+  // Check for insufficient material
+  if (checkInsufficientMaterial(state)) {
+    const lightCount = countStones(state, 'Light');
+    const darkCount = countStones(state, 'Dark');
+    const winner = lightCount > darkCount ? 'Light' : 
+                  darkCount > lightCount ? 'Dark' : null;
+    
+    return {
+      ...state,
+      winner,
+      winReason: {
+        type: 'stalemate',
+        drawType: 'insufficient'
+      }
+    };
+  }
+  
+  return state;
 }
 
 /**

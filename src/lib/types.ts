@@ -22,6 +22,12 @@ export interface MoveRecord {
   timestamp: number;
 }
 
+export type WinReason = 
+  | { type: 'stoneCount'; loserStoneCount: number; threshold: number; loser: Player }
+  | { type: 'resignation'; resignedPlayer: Player }
+  | { type: 'stalemate'; drawType: 'mutual' | 'repetition' | 'insufficient' }
+  | { type: 'timeout'; timedOutPlayer: Player };
+
 export interface GameState {
   board: (Player | null)[][];
   current: Player;
@@ -31,15 +37,16 @@ export interface GameState {
   chainOrigin?: Cell;
   moveHistory: MoveRecord[];
   variant: VariantFlags;
-  winner?: Player;
-  winReason?: {
-    type: 'stoneCount';
-    loserStoneCount: number;
-    threshold: number;
-    loser: Player;
-  };
+  winner?: Player | null; // null indicates draw
+  winReason?: WinReason;
   placementCount: number; // Count of stones placed this turn during placement phase
   capturedLastMove: Cell[]; // Stones captured in the last move
+  stalemateOffers: {
+    Light: boolean;
+    Dark: boolean;
+  };
+  moveRepetition: number; // Counter for repeated board positions
+  lastBoardHash?: string; // Hash of board state for repetition detection
 }
 
 export interface CaptureResult {
@@ -68,6 +75,7 @@ export interface GameResult {
   id: string;
   timestamp: number;
   winner: Player | null; // null for draws
+  winReason?: WinReason;
   opponent: 'AI' | 'Guest'; // Since we're AI-only now
   aiDifficulty?: AIDifficulty;
   duration: number; // in seconds

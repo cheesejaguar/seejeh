@@ -71,6 +71,17 @@
 - **Why**: Provides realistic, varied gameplay that teaches different aspects of Seejeh strategy
 - **Success Criteria**: AI moves feel purposeful and educational rather than random or mechanical
 
+### Advanced Game Ending Conditions
+- **What**: Comprehensive endgame scenarios including stalemate offers, resignation options, and automatic stalemate detection
+- **Why**: Provides realistic game conclusion options beyond traditional capture-based victory, matching competitive play expectations
+- **Success Criteria**: 
+  - Players can offer/accept/reject stalemate by mutual agreement
+  - Resignation available as honorable exit option
+  - AI makes intelligent decisions about stalemate offers based on position evaluation
+  - Automatic stalemate detection for repetitive positions or insufficient material
+  - Clear indication of win reason (stone count, resignation, stalemate type)
+  - Proper game result tracking for all ending scenarios
+
 ## Design Direction
 
 ### Visual Tone & Identity
@@ -111,6 +122,16 @@
   - Hard (depth 4-5, advanced evaluation with opening book and endgame optimization)
 - **Opening Book**: Pre-computed optimal opening moves for higher difficulties
 - **Endgame Tables**: Specialized logic for winning/drawing positions with few pieces
+- **Stalemate Intelligence**: AI evaluates stalemate offers based on position strength, material balance, and difficulty level
+
+### Advanced Game Logic
+- **Stalemate Detection**: Automatic recognition of draw conditions including position repetition, insufficient material, and mutual immobility
+- **Resignation Handling**: Honorable exit option with proper game result recording
+- **Win Reason Tracking**: Detailed classification of game endings (stone count, resignation, stalemate variants)
+- **AI Stalemate Strategy**: 
+  - Beginner AI: More willing to accept draws in close positions
+  - Advanced AI: Only accepts stalemate when clearly disadvantaged
+  - Strategic offering: AI offers stalemate in low-material endgames with limited progress potential
 
 ### Performance Requirements
 - AI moves completed within 1-3 seconds maximum

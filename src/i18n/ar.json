@@ -37,12 +37,26 @@
   "endChain": "إنهاء السلسلة",
   "endTurn": "إنهاء الدور",
   "winner": "{{player}} فاز!",
+  "draw": "اللعبة تعادل!",
   "gameOver": "انتهت اللعبة",
   "winReason": {
     "stoneCount": "{{opponent}} انخفض إلى {{count}} أحجار",
-    "threshold": "تم تحقيق النصر عند عتبة {{threshold}} حجر"
+    "threshold": "تم تحقيق النصر عند عتبة {{threshold}} حجر",
+    "resignation": "{{player}} استسلم",
+    "stalemate": {
+      "mutual": "تعادل بالاتفاق المتبادل",
+      "repetition": "تعادل بتكرار الوضعية",
+      "insufficient": "تعادل - مواد غير كافية للمتابعة"
+    }
   },
   "stalemate": "إعلان التعادل",
+  "resignation": "الاستسلام",
+  "stalemateOffer": {
+    "offered": "عُرض التعادل",
+    "accept": "قبول التعادل",
+    "reject": "رفض التعادل",
+    "description": "كلا اللاعبين يوافقان على إنهاء اللعبة. الفائز يُحدد بعدد الأحجار."
+  },
   "variant": {
     "firstMoveMustEnterCenter": "الحركة الأولى يجب أن تدخل المركز",
     "antiShuttle": "قاعدة منع التنقل",
