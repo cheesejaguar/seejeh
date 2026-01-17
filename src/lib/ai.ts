@@ -240,10 +240,10 @@ function minimax(
  */
 function generateAllMoves(state: GameState): AIMove[] {
   const moves: AIMove[] = [];
-  
+
   if (state.phase === 'placement') {
     const placements = placementsFor(state, state.current);
-    
+
     if (state.placementCount === 0) {
       // First stone of turn - generate single placements
       for (const cell of placements) {
@@ -261,6 +261,21 @@ function generateAllMoves(state: GameState): AIMove[] {
         });
       }
     }
+  } else if (state.phase === 'chain' && state.chainOrigin) {
+    // Chain capture phase - only generate moves from chainOrigin
+    const from = state.chainOrigin;
+    // Need to temporarily treat as movement phase for movesFor to work
+    const tempState = { ...state, phase: 'movement' as const };
+    const destinations = movesFor(tempState, from);
+
+    for (const to of destinations) {
+      moves.push({
+        type: 'movement',
+        cells: [from, to],
+        from,
+        to
+      });
+    }
   } else {
     // Movement phase
     for (let r = 0; r < 7; r++) {
@@ -268,7 +283,7 @@ function generateAllMoves(state: GameState): AIMove[] {
         if (state.board[r][c] === state.current) {
           const from = { r, c };
           const destinations = movesFor(state, from);
-          
+
           for (const to of destinations) {
             moves.push({
               type: 'movement',
@@ -281,7 +296,7 @@ function generateAllMoves(state: GameState): AIMove[] {
       }
     }
   }
-  
+
   return moves;
 }
 

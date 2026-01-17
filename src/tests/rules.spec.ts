@@ -185,7 +185,7 @@ describe('Seejeh Rules Engine', () => {
     it('should handle multi-axis captures', () => {
       const state = initialState7x7();
       state.phase = 'movement';
-      
+
       const testBoard = state.board.map(row => [...row]);
       // Create cross pattern with Dark stones around center
       testBoard[2][3] = 'Dark';
@@ -197,12 +197,14 @@ describe('Seejeh Rules Engine', () => {
       testBoard[5][3] = 'Light';
       testBoard[3][1] = 'Light';
       testBoard[3][5] = 'Light';
-      
+      // Place Light stone at center (simulating the move has been applied)
+      testBoard[3][3] = 'Light';
+
       const captures = resolveCaptures(
         { ...state, board: testBoard },
-        { r: 3, c: 3 } // Move Light to center
+        { r: 3, c: 3 } // Light moved to center
       );
-      
+
       // Should capture in multiple directions
       expect(captures.captured.length).toBeGreaterThan(0);
     });
@@ -211,16 +213,19 @@ describe('Seejeh Rules Engine', () => {
   describe('Win Conditions', () => {
     it('should detect win when opponent has 7 or fewer stones', () => {
       const state = initialState7x7();
-      
+
       // Set up board with Dark having only 7 stones
       for (let i = 0; i < 7; i++) {
         state.board[0][i] = 'Dark';
       }
-      // Light has more stones
-      for (let i = 0; i < 10; i++) {
-        state.board[1][i % 7] = 'Light';
+      // Light has more stones (10 stones across two rows)
+      for (let i = 0; i < 7; i++) {
+        state.board[1][i] = 'Light';
       }
-      
+      for (let i = 0; i < 3; i++) {
+        state.board[2][i] = 'Light';
+      }
+
       expect(checkWin(state)?.winner).toBe('Light');
     });
 
@@ -267,15 +272,18 @@ describe('Seejeh Rules Engine', () => {
         firstMoveMustEnterCenter: true
       });
       state.phase = 'movement';
+      // Place a Light stone adjacent to center (one step away)
+      state.board[2][3] = 'Light';
+      // Also place a Light stone elsewhere for testing non-center move
       state.board[1][1] = 'Light';
-      
-      // First move not to center should fail
+
+      // First move not to center should fail (from 1,1 to 1,2)
       expect(() => {
         applyMove(state, { r: 1, c: 1 }, { r: 1, c: 2 });
       }).toThrow('First move must enter center');
-      
-      // First move to center should succeed
-      const newState = applyMove(state, { r: 1, c: 1 }, { r: 3, c: 3 });
+
+      // First move to center should succeed (from 2,3 to 3,3 - one orthogonal step)
+      const newState = applyMove(state, { r: 2, c: 3 }, { r: 3, c: 3 });
       expect(newState.board[3][3]).toBe('Light');
     });
   });

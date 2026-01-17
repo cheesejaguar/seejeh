@@ -228,10 +228,27 @@ export const useGameStore = create<GameStore>((set, get) => ({
       get().removeBlockadeStone(cell);
       return;
     }
-    
+
+    // During chain capture phase, don't allow selecting different pieces
+    // The player can only move the piece at chainOrigin
+    if (gameState.phase === 'chain') {
+      // Only allow clicking on empty cells to continue the chain
+      // The piece to move is always the one at chainOrigin
+      if (gameState.board[cell.r][cell.c] === null && gameState.chainOrigin) {
+        get().chainStep(cell);
+        get().clearHints();
+        set({
+          previewCaptures: [],
+          hoveredMove: null
+        });
+      }
+      // Ignore clicks on pieces during chain phase
+      return;
+    }
+
     // If cell has current player's stone, select it
     if (gameState.board[cell.r][cell.c] === gameState.current) {
-      set({ 
+      set({
         selectedCell: cell,
         previewCaptures: [], // Clear preview when selecting a new piece
         hoveredMove: null
@@ -241,17 +258,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }
     
     // If cell is empty and we have a selection, try to move
+    // (This only handles movement phase - chain phase is handled above)
     if (gameState.board[cell.r][cell.c] === null && selectedCell) {
-      if (gameState.phase === 'chain') {
-        get().chainStep(cell);
-      } else {
-        get().moveStone(selectedCell, cell);
-      }
+      get().moveStone(selectedCell, cell);
       // Clear hints and preview after move
       get().clearHints();
-      set({ 
-        previewCaptures: [], 
-        hoveredMove: null 
+      set({
+        previewCaptures: [],
+        hoveredMove: null
       });
     }
   },
@@ -333,17 +347,23 @@ export const useGameStore = create<GameStore>((set, get) => ({
           }
         });
       }
-      
+
       // Check for blockade after turn change
       const needsBlockadeResolution = !hasAnyLegalMove(newState, newState.current);
-      
-      set({ 
-        gameState: newState, 
-        selectedCell: null,
+
+      // If entering chain capture mode, set selectedCell to chainOrigin
+      // so the player can see valid moves for continuing the chain
+      const newSelectedCell = newState.phase === 'chain' && newState.chainOrigin
+        ? newState.chainOrigin
+        : null;
+
+      set({
+        gameState: newState,
+        selectedCell: newSelectedCell,
         blockadeRemovalMode: needsBlockadeResolution && !newState.winner
       });
       saveGameState(newState);
-      
+
       // Play appropriate sound
       if (newState.capturedLastMove.length > 0) {
         soundSystem.play('capture');
@@ -543,14 +563,41 @@ export const useGameStore = create<GameStore>((set, get) => ({
             get().placeStone(aiMove.cells[0]);
           }
         }
+      } else if (gameState.phase === 'chain') {
+        // Handle chain capture phase
+        const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
+
+        if (!aiMove || !aiMove.from || !aiMove.to) {
+          // No more captures available, end the chain
+          get().endChainCapture();
+          set({ aiThinking: false });
+          return;
+        }
+
+        // Check if continuing the chain would result in another capture
+        // by simulating the move
+        const tempState = { ...gameState, phase: 'movement' as const };
+        try {
+          const simulatedState = applyMove(tempState, aiMove.from, aiMove.to);
+          if (simulatedState.capturedLastMove.length > 0) {
+            // This move would capture, so continue the chain
+            get().chainStep(aiMove.to);
+          } else {
+            // No capture would happen, end the chain instead
+            get().endChainCapture();
+          }
+        } catch {
+          // If move fails, end the chain
+          get().endChainCapture();
+        }
       } else {
         // Check for stalemate decisions first
         const humanPlayer = gameState.current === 'Light' ? 'Dark' : 'Light';
-        
+
         // If human offered stalemate, decide whether to accept
         if (gameState.stalemateOffers[humanPlayer]) {
           const shouldAccept = shouldAIAcceptStalemate(gameState, settings.aiDifficulty);
-          
+
           if (shouldAccept) {
             get().offerStalemate(); // Accept by offering stalemate too
             set({ aiThinking: false });
@@ -560,30 +607,30 @@ export const useGameStore = create<GameStore>((set, get) => ({
             // Continue with normal move
           }
         }
-        
+
         // Check if AI should offer stalemate
-        if (!gameState.stalemateOffers[gameState.current] && 
+        if (!gameState.stalemateOffers[gameState.current] &&
             shouldAIOfferStalemate(gameState, settings.aiDifficulty)) {
           get().offerStalemate();
           set({ aiThinking: false });
           return;
         }
-        
+
         // Handle AI movement
         const aiMove = getBestAIMove(gameState, settings.aiDifficulty);
-        
+
         if (!aiMove) {
           set({ aiThinking: false });
           return;
         }
-        
+
         // Generate move analysis if enabled
         const { settings } = get();
         if (settings.moveAnalysisEnabled && aiMove.from && aiMove.to) {
           const analysis = analyzeAIMove(gameState, aiMove, settings.aiDifficulty);
           get().updateAIAnalysis(analysis);
         }
-        
+
         if (aiMove.from && aiMove.to) {
           get().moveStone(aiMove.from, aiMove.to);
         }
