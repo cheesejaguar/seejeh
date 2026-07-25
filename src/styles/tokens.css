@@ -1,0 +1,157 @@
+/* FILE: src/styles/tokens.css
+ *
+ * Design tokens for Seejeh.
+ *
+ * The palette is taken from the game's own material world rather than a
+ * generic "board game" look: packed ochre earth for the board, bone limestone
+ * and cool basalt for the two sets of stones, and INDIGO — نيلة, the dye of
+ * Bedouin and fellahin cloth — as the accent, with madder red for danger.
+ * Indigo on ochre, not terracotta on cream.
+ */
+
+:root {
+  color-scheme: dark light;
+
+  /* --- Earth ------------------------------------------------------------ */
+  --earth-void: #120d0a;      /* page beyond the board */
+  --earth-shadow: #1e150f;    /* inside a dug hole */
+  --earth-deep: #2e2118;
+  --earth-mid: #6d5a41;       /* packed soil */
+  --earth: #8a7455;           /* board surface */
+  --earth-lit: #a89070;       /* sunlit ridge between holes */
+  --earth-dust: #c4b294;      /* raised dust, hairlines */
+
+  /* --- Stones ----------------------------------------------------------- */
+  --limestone-hi: #fbf3e2;
+  --limestone: #e9dcc2;
+  --limestone-lo: #b7a684;
+  --basalt-hi: #4a4b57;
+  --basalt: #2c2d36;
+  --basalt-lo: #14141a;
+
+  /* --- Dyes: the accent pair ------------------------------------------- */
+  --indigo-deep: #1d2a63;
+  --indigo: #3c50b0;
+  --indigo-bright: #6d83e4;
+  --indigo-glow: #93a6ff;
+
+  --madder-deep: #5d1f1a;
+  --madder: #a8402f;
+  /* #d1614a reads better but only reaches 4.44:1 on --surface; this clears AA. */
+  --madder-bright: #e57a62;
+
+  --verdigris: #2f7d6b;       /* rare positive accent: oxidised copper */
+
+  /* --- Semantic (dark is the default; the board is lit from above) ------ */
+  --bg: var(--earth-void);
+  --bg-raised: #1c1610;
+  --bg-sunken: #0d0908;
+  --surface: #241b14;
+  --surface-hi: #2f241a;
+  --border: #3d2f22;
+  --border-strong: #5a4632;
+
+  --text: #f0e6d4;
+  --text-muted: #b7a68d;
+  /* All three clear WCAG AA (4.5:1) against --surface-hi, the lightest panel
+     background they are ever drawn on. */
+  --text-faint: #a3927a;
+  --text-inverse: #1a130d;
+
+  --accent: var(--indigo-bright);
+  --accent-quiet: var(--indigo);
+  --accent-contrast: #ffffff;
+  --danger: var(--madder-bright);
+  --positive: #5fbfa4;
+
+  /* The focus ring is drawn as a white core with a dark halo (see board.css)
+     so it stays visible on both the pale board and the dark surround — indigo
+     alone managed only 1.94:1 against the earth. */
+  --focus-ring: #ffffff;
+  --focus-halo: rgb(0 0 0 / 0.85);
+
+  /* --- Type ------------------------------------------------------------- */
+  --font-display: 'Spectral', 'Amiri', Georgia, serif;
+  --font-ui: 'IBM Plex Sans Arabic', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --step--2: clamp(0.69rem, 0.67rem + 0.1vw, 0.75rem);
+  --step--1: clamp(0.83rem, 0.8rem + 0.15vw, 0.9rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.09rem);
+  --step-1: clamp(1.2rem, 1.13rem + 0.35vw, 1.4rem);
+  --step-2: clamp(1.44rem, 1.32rem + 0.6vw, 1.8rem);
+  --step-3: clamp(1.73rem, 1.53rem + 1vw, 2.44rem);
+  --step-4: clamp(2.07rem, 1.75rem + 1.6vw, 3.3rem);
+
+  /* --- Space and shape -------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* --- Motion ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-drop: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 130ms;
+  --dur: 220ms;
+  --dur-slow: 420ms;
+  --dur-move: 300ms;
+}
+
+/* Light theme: the same earth at midday rather than dusk. */
+:root[data-theme='light'] {
+  --bg: #e5dcc9;
+  --bg-raised: #efe8d9;
+  --bg-sunken: #d3c7ae;
+  --surface: #f4eee1;
+  --surface-hi: #fbf7ed;
+  --border: #c6b898;
+  --border-strong: #a4926f;
+
+  --text: #241a11;
+  --text-muted: #5c4c37;
+  --text-faint: #756142;
+  --text-inverse: #fbf7ed;
+
+  --earth: #b19a76;
+  --earth-lit: #c9b491;
+  --earth-mid: #937d5c;
+  --earth-shadow: #6b573c;
+
+  --accent: var(--indigo);
+  --accent-quiet: var(--indigo-deep);
+  --danger: var(--madder);
+  /* --positive is defined once in :root and would otherwise stay at the dark
+     theme's mint, which is only 1.92:1 on a pale background. */
+  --positive: #1f6f5c;
+  --focus-ring: #1d2a63;
+  --focus-halo: rgb(255 255 255 / 0.9);
+}
+
+/* Both the OS preference and the in-app Animation setting collapse durations.
+   The in-app control previously only affected the JS-driven FLIP, so CSS
+   animations kept running when a player chose "Reduced". */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 1ms;
+    --dur: 1ms;
+    --dur-slow: 1ms;
+    --dur-move: 1ms;
+  }
+}
+
+:root[data-motion='reduced'] {
+  --dur-fast: 1ms;
+  --dur: 1ms;
+  --dur-slow: 1ms;
+  --dur-move: 1ms;
+}

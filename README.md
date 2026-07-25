@@ -1,165 +1,122 @@
-# Seejeh 7×7 - Traditional Board Game
+# Seejeh · السِّيجة
 
-A faithful implementation of the ancient Egyptian board game Seejeh (also known as Seega) built with React, TypeScript, and Vite. Features authentic 7×7 rules, bilingual Arabic/English support, and customizable rule variants.
-
-![Seejeh Game Screenshot](https://via.placeholder.com/800x400?text=Seejeh+7x7+Game)
-
-## 🎮 Quick Start
+A faithful implementation of **Seejeh** (Seega, سيجة) on the 7×7 board — the traditional
+game of siege and capture played across Egypt, Sudan and the Levant. Two phases, custodian
+capture, four levels of opponent, English and Arabic.
 
 ```bash
-# Install dependencies
 npm install
-
-# Start development server
-npm run dev
-
-# Run tests
-npm test
-
-# Build for production
+npm run dev        # http://localhost:5000
+npm test           # 123 tests
 npm run build
 ```
 
-The game will be available at `http://localhost:5173`
+## The rules, and how they were settled
 
-## 🎯 Game Rules
+The rules were reconstructed from primary and living sources rather than assumed: Lane (1836),
+Bolton (1890), Falkener (1892), Murray (1952), Bell (1979), the Ludii/Digital Ludeme Project
+ruleset, and Egyptian, Palestinian, Jordanian, Tunisian and Algerian accounts of play. The full
+reconstruction is in [`doc/RULES_SPEC.md`](doc/RULES_SPEC.md).
 
-### Overview
-Seejeh is a two-player strategy game played on a 7×7 board. Players compete to capture opponent stones through strategic placement and movement.
+Where sources genuinely disagree, the disputed rule is a **setting**, not an assumption. Three
+points are worth stating plainly, because earlier versions of this app had them wrong:
 
-### Gameplay Phases
+**Capture takes exactly one stone per direction.** Move a stone so that a single enemy stone is
+trapped between it and another of yours, and that one stone is taken. Sweeping a whole contiguous
+line is the rule of Hasami Shogi, not Seega — Ludii encodes the cap explicitly as
+`("CustodialCapture" Orthogonal (max 1))`, and Lane, Bolton, Falkener and every Arabic informant
+describe a single stone. Because a move can close a sandwich in more than one direction at once,
+a single move takes at most three.
 
-#### 1. Placement Phase
-- Players alternate placing **2 stones per turn**
-- Total of 48 stones (24 per player)
-- **Cannot place in center cell** during this phase
-- Continue until all stones are placed
+**There is no "reduce your opponent to seven stones" rule.** It appears in no source in any
+language. The only attested numeric threshold is *one*, and it has a reason: capture requires two
+of your own stones, so a player down to one can never capture again. Winning is elimination, or
+reducing the opponent to a single stone.
 
-#### 2. Movement Phase
-- Move **one stone orthogonally** (one step only)
-- **No diagonal moves or jumping**
-- Capture opponent stones via custodian capture
-- Continue until one player is reduced to 7 or fewer stones
+**A blockaded player is never penalised.** If you cannot move, your opponent must move so that you
+can — and their move is restricted to ones that actually open a path, since they are the ones who
+profit from the blockade. Rules that take stones from the *blocked* player are attested nowhere.
 
-### Capture Rules
+### How to play
 
-**Custodian Capture**: Sandwich one or more contiguous opponent stones between your pieces along orthogonal lines. All sandwiched stones are captured and removed.
+1. Take turns placing two stones at a time until all 48 are down. The centre stays empty.
+2. Because 48 stones sit on 49 cells, the centre is the only gap — so the first move is forced
+   into it. This is a consequence of the board, not a special rule.
+3. Move one stone one square, orthogonally.
+4. Trap a single enemy stone between two of yours to take it. Only the stone you *move* can trap:
+   walking into a gap between two enemies is safe.
+5. If your move takes a stone, that same stone may move again and take again.
+6. Win by taking every enemy stone, or leaving your opponent with one.
 
-**Chain Captures**: If your move captures stones, you may continue moving the same piece to make additional captures. You can stop the chain at any time.
+The centre square — **عين الدَّك**, "the eye" — shelters the stone standing on it from capture,
+though that stone can still help you capture. This is the Bell-derived tradition and is on by
+default; it is absent from Lane, Bolton and Ludii, so it can be turned off.
 
-**Safe Center**: The center cell is marked and stones placed there **cannot be captured**.
+## Architecture
 
-### Win Condition
-Reduce your opponent to **7 or fewer stones** to win immediately.
-
-### Special Rules
-
-**Blockade**: If a player has no legal moves, the opponent removes one of the blocked player's stones, then the blocked player continues.
-
-## ⚙️ Rule Variants
-
-The game includes toggleable rule variants:
-
-- **First Move Center**: First movement must enter the center cell
-- **Anti-Shuttle**: Prevents repetitive back-and-forth movement
-- **Blockade Removal**: Enable/disable blockade resolution
-
-## 🌍 Language Support
-
-- **English** (LTR layout)
-- **Arabic** (RTL layout) 
-- Full interface translation
-- Culturally appropriate typography
-
-## 🛠️ Technical Features
-
-- **Pure TypeScript** game engine with comprehensive tests
-- **Responsive design** - works on desktop and mobile
-- **Keyboard navigation** - full accessibility support
-- **Local persistence** - games auto-save to localStorage
-- **Zero dependencies** for game logic
-- **Hot-seat multiplayer** (two players, one device)
-
-## 🏗️ Architecture
-
-### Core Components
-
-- **Game Engine** (`src/lib/rules.ts`) - Pure functions for game logic
-- **State Management** (`src/state/gameStore.ts`) - Zustand store for UI state
-- **Board Component** (`src/components/Board.tsx`) - Interactive game board
-- **I18n System** (`src/i18n/`) - Bilingual support with RTL
-
-### Key Design Principles
-
-- **Pure functions** for all game logic (no side effects)
-- **Immutable state** updates
-- **Comprehensive error handling**
-- **Separation of concerns** (UI vs game logic)
-- **Accessibility first** design
-
-## 🧪 Testing
-
-Run the test suite:
-
-```bash
-npm test
+```
+src/
+  engine/       Pure rules. No React, no I/O, no randomness.
+  ai/           Negamax + alpha-beta search, in a Web Worker.
+  leaderboard/  Local profiles, Elo ratings, records, history.
+  store/        Zustand orchestration. Contains no rules.
+  components/   UI.
+  i18n/         Type-safe bilingual catalogues.
+  styles/       Design tokens and the CSS-3D board.
 ```
 
-Tests cover:
-- ✅ Valid/invalid moves and placements
-- ✅ Single and multi-stone captures
-- ✅ Chain capture mechanics
-- ✅ Win condition detection
-- ✅ Blockade scenarios
-- ✅ Rule variant enforcement
-- ✅ Center cell immunity
+**One source of truth for the rules.** Every state transition goes through
+`applyAction(state, action)`, which is total — it never throws for a game reason, returning a
+machine-readable rejection code the UI translates. Nothing outside `src/engine` implements a rule.
+The previous version let the store reimplement placement, and the two drifted.
 
-## 🚀 Deployment
+**Translations cannot silently rot.** `ar.ts` is typed as `Record<TranslationKey, string>` derived
+from the English catalogue, so a missing or misspelled Arabic key is a compile error rather than a
+string that renders as its own key.
 
-### Vercel (Recommended)
-```bash
-npm run build
-# Upload dist/ folder to Vercel
-```
+**The AI runs off the main thread.** Iterative-deepening negamax with alpha-beta, a transposition
+table, move ordering and a capture-only quiescence search. Seejeh is not strictly alternating — a
+player keeps the move during a capture chain and during a blockade extra turn — so the search
+negates only when the side to move actually changes.
 
-### Netlify
-```bash
-npm run build
-# Drag dist/ folder to Netlify deploy
-```
+**Animation stays on the compositor.** Piece movement is FLIP-animated: measure, invert with a
+transform, release. Stones are layered CSS with specular highlights and cast shadows on a board
+tilted in perspective. Everything respects `prefers-reduced-motion`.
 
-### GitHub Pages
-```bash
-npm run build
-# Configure Pages to serve from dist/ folder
-```
+## Testing
 
-## 📚 Historical Background
+123 tests. Besides unit tests per rule, the engine is checked by **property-based tests** that
+play hundreds of complete randomised games across eight variant configurations and assert design
+invariants after every single ply: stones are conserved, counts never go negative, a live game
+always offers the side to move a legal action, the turn only repeats for a legitimate reason, and
+a finished game and the `gameOver` phase always agree.
 
-Seejeh (Arabic: سيجة) is one of the world's oldest strategy games, with archaeological evidence dating back thousands of years in ancient Egypt. The game spread throughout North Africa and the Middle East, with regional variations in rules and board sizes.
+One test asserts that the first movement-phase move is always into the centre. It is not testing a
+rule — it is testing that the placement phase is correct, since any other result would mean the
+board did not fill properly.
 
-The 7×7 variant implemented here represents the classical form as documented in historical sources and modern game research.
+`src/tests/*/regressions.spec.ts` pin the defects found by an adversarial review of this rewrite:
+that root search scores are real values rather than the alpha ceiling (a collapsed root made the
+"Steady" opponent pick uniformly at random), that a draw offer lapses when play continues, that the
+rating chain stays continuous across an import, and that stacked dialogs restore page scrolling.
+Each was confirmed to fail before its fix.
 
-## 🔗 Sources & References
+## Rule settings
 
-- Bell, R.C. (1979). *Board and Table Games from Many Civilizations*
-- [Wikipedia: Seega](https://en.wikipedia.org/wiki/Seega)
-- Murray, H.J.R. (1952). *A History of Board-Games Other Than Chess*
+| Setting | Default | Notes |
+|---|---|---|
+| The eye shelters | on | Bell tradition; absent from Lane, Bolton, Ludii |
+| Chain captures | on | Same stone, and every step must itself capture |
+| Chains compulsory | off | Bolton says "has the right"; Lane reads as compulsory |
+| One stone loses | on | A lone stone can never capture |
+| Blockade | opponent opens a path | Alternatives: sacrifice a stone (Lane); blocked player loses |
+| Who moves first | whoever laid out first | Arabic sources are unanimous; Bell reverses it |
+| Quiet-move limit | 50 | Not traditional — the standard digital convention |
+| Threefold repetition | draw | Not traditional |
 
-## 📄 License
+## Documentation
 
-MIT License - feel free to use this code for learning, modification, or commercial projects.
-
-## 🤝 Contributing
-
-Contributions welcome! Areas for improvement:
-
-- Additional rule variants
-- AI opponent implementation
-- Online multiplayer support
-- Enhanced accessibility features
-- Performance optimizations
-
----
-
-*Built with ❤️ using React, TypeScript, and modern web standards*
+- [`doc/RULES_SPEC.md`](doc/RULES_SPEC.md) — the reconstructed rules, source by source, with every
+  disputed point named and resolved.
+- [`doc/DEFECT_ANALYSIS.md`](doc/DEFECT_ANALYSIS.md) — the audit of the previous implementation
+  that motivated this rewrite.

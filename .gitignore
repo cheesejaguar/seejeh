@@ -31,3 +31,7 @@ packages
 .devcontainer/
 
 .spark-workbench-id
+
+# Browser-verification artifacts (screenshots land in the repo root)
+.playwright-mcp/
+/*.png

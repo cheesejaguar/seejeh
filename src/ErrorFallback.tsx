@@ -1,39 +1,72 @@
-import { Alert, AlertTitle, AlertDescription } from "./components/ui/alert";
-import { Button } from "./components/ui/button";
+import type { FallbackProps } from 'react-error-boundary';
+import { createTranslator, directionOf, type Language } from './i18n';
+import { loadSettings } from './store/settings';
 
-import { AlertTriangleIcon, RefreshCwIcon } from "lucide-react";
+/**
+ * Reads the language directly from storage rather than the store: the store may
+ * be exactly what failed, and a crash screen an Arabic reader cannot read is
+ * not a crash screen.
+ */
+function languageFromStorage(): Language {
+  try {
+    return loadSettings().language;
+  } catch {
+    return 'en';
+  }
+}
 
-export const ErrorFallback = ({ error, resetErrorBoundary }) => {
-  // When encountering an error in the development mode, rethrow it and don't display the boundary.
-  // The parent UI will take care of showing a more helpful dialog.
+export function ErrorFallback({ error, resetErrorBoundary }: FallbackProps) {
+  // In development, rethrow so the dev overlay shows the real stack.
   if (import.meta.env.DEV) throw error;
 
+  const language = languageFromStorage();
+  const { t } = createTranslator(language);
+  const message = error instanceof Error ? error.message : String(error);
+
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <Alert variant="destructive" className="mb-6">
-          <AlertTriangleIcon />
-          <AlertTitle>This spark has encountered a runtime error</AlertTitle>
-          <AlertDescription>
-            Something unexpected happened while running the application. The error details are shown below. Contact the spark author and let them know about this issue.
-          </AlertDescription>
-        </Alert>
-        
-        <div className="bg-card border rounded-lg p-4 mb-6">
-          <h3 className="font-semibold text-sm text-muted-foreground mb-2">Error Details:</h3>
-          <pre className="text-xs text-destructive bg-muted/50 p-3 rounded border overflow-auto max-h-32">
-            {error.message}
-          </pre>
-        </div>
-        
-        <Button 
-          onClick={resetErrorBoundary} 
-          className="w-full"
-          variant="outline"
+    <div
+      className="app"
+      dir={directionOf(language)}
+      lang={language}
+      style={{ display: 'grid', placeItems: 'center', padding: '2rem' }}
+    >
+      <div className="panel" style={{ maxWidth: '34rem' }}>
+        <h2 style={{ marginBottom: 'var(--space-3)' }}>{t('error.title')}</h2>
+        <p className="prose">{t('error.body')}</p>
+        <pre
+          className="numeric"
+          // The message itself is developer output and stays left-to-right even
+          // in an RTL document.
+          dir="ltr"
+          style={{
+            marginTop: 'var(--space-4)',
+            padding: 'var(--space-3)',
+            background: 'var(--bg-sunken)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            fontSize: 'var(--step--2)',
+            overflow: 'auto',
+            maxHeight: '10rem',
+            whiteSpace: 'pre-wrap',
+            textAlign: 'start',
+          }}
         >
-          <RefreshCwIcon />
-          Try Again
-        </Button>
+          {message}
+        </pre>
+        <div className="btn-row" style={{ marginTop: 'var(--space-4)' }}>
+          <button type="button" className="btn is-primary" onClick={resetErrorBoundary}>
+            {t('error.retry')}
+          </button>
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              window.location.reload();
+            }}
+          >
+            {t('error.reload')}
+          </button>
+        </div>
       </div>
     </div>
   );
