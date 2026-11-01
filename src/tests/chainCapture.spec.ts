@@ -16,9 +16,7 @@ describe('Chain Capture Mechanics', () => {
       const state = initialState7x7();
       state.phase = 'movement';
 
-      // Setup: Light can capture Dark by moving to complete sandwich
-      // Light at (1,0), Dark at (1,1), Light moves from (1,2) to... wait
-      // Actually: Light at (1,0), Dark at (1,1), empty at (1,2)
+      // Light at (1,0), Dark at (1,1), empty at (1,2)
       // Light piece at (1,3) moves to (1,2) to capture Dark at (1,1)
       state.board[1][0] = 'Light';
       state.board[1][1] = 'Dark';
@@ -80,20 +78,32 @@ describe('Chain Capture Mechanics', () => {
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Setup: Light can make two captures in sequence
       // First capture: Light(1,0) - Dark(1,1) - [Light moves here](1,2)
-      // Second capture possible: [Light at 1,2] - Dark(1,3) - Light(1,4)
+      // Second capture, after stepping on to (1,3):
+      //   [Light at 1,3] - Dark(2,3) - Light(3,3)
       state.board[1][0] = 'Light';
       state.board[1][1] = 'Dark';
-      state.board[1][3] = 'Dark';
-      state.board[1][4] = 'Light';
+      state.board[2][3] = 'Dark';
+      state.board[3][3] = 'Light';
       state.board[0][2] = 'Light'; // Piece to move
 
-      // First move captures Dark at (1,1)
+      // First move captures Dark at (1,1) only
       const afterFirstCapture = applyMove(state, { r: 0, c: 2 }, { r: 1, c: 2 });
 
       expect(afterFirstCapture.phase).toBe('chain');
       expect(afterFirstCapture.chainOrigin).toEqual({ r: 1, c: 2 });
+      expect(afterFirstCapture.capturedLastMove).toEqual([{ r: 1, c: 1 }]);
+      expect(afterFirstCapture.board[2][3]).toBe('Dark');
+
+      // Chain step from (1,2) to (1,3) captures Dark at (2,3)
+      const afterSecondCapture = applyChainStep(afterFirstCapture, { r: 1, c: 3 });
+
+      expect(afterSecondCapture.capturedLastMove).toEqual([{ r: 2, c: 3 }]);
+      expect(afterSecondCapture.board[2][3]).toBe(null);
+      expect(afterSecondCapture.board[1][3]).toBe('Light');
+      expect(afterSecondCapture.phase).toBe('chain');
+      expect(afterSecondCapture.chainOrigin).toEqual({ r: 1, c: 3 });
+      expect(afterSecondCapture.current).toBe('Light');
     });
   });
 
@@ -123,14 +133,14 @@ describe('Chain Capture Mechanics', () => {
   });
 
   describe('Chain Capture with Multiple Directions', () => {
-    it('should allow chain to capture in different direction', () => {
+    it('should capture on two axes in a single move', () => {
       const state = initialState7x7();
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Setup: Light can capture horizontally first, then vertically
+      // Moving to (2,2) closes two lines at once:
       // Horizontal: Light(2,0) - Dark(2,1) - [move here](2,2)
-      // After move, can capture vertically: Light(0,2) - Dark(1,2) - Light(2,2)
+      // Vertical:   Light(0,2) - Dark(1,2) - [move here](2,2)
       state.board[2][0] = 'Light';
       state.board[2][1] = 'Dark';
       state.board[0][2] = 'Light';
@@ -139,13 +149,35 @@ describe('Chain Capture Mechanics', () => {
 
       const afterFirstCapture = applyMove(state, { r: 2, c: 3 }, { r: 2, c: 2 });
 
-      // Captured Dark at (2,1)
-      expect(afterFirstCapture.capturedLastMove).toContainEqual({ r: 2, c: 1 });
+      // Arriving at (2,2) captures both the horizontal and the vertical line
+      expect(afterFirstCapture.capturedLastMove).toEqual(
+        expect.arrayContaining([{ r: 2, c: 1 }, { r: 1, c: 2 }])
+      );
+      expect(afterFirstCapture.capturedLastMove).toHaveLength(2);
       expect(afterFirstCapture.phase).toBe('chain');
+    });
 
-      // Chain step moves up to capture Dark at (1,2)
-      // But wait - this isn't possible since (2,2) has our piece
-      // Let me reconsider the test scenario
+    it('should capture in a new direction on a chain step', () => {
+      const state = initialState7x7();
+      state.phase = 'movement';
+      state.current = 'Light';
+
+      // First capture is horizontal: Light(2,0) - Dark(2,1) - [move here](2,2)
+      state.board[2][0] = 'Light';
+      state.board[2][1] = 'Dark';
+      state.board[2][3] = 'Light'; // Piece to move
+      // Second capture is vertical, after stepping down to (3,2):
+      // [Light at 3,2] - Dark(4,2) - Light(5,2)
+      state.board[4][2] = 'Dark';
+      state.board[5][2] = 'Light';
+
+      const afterFirstCapture = applyMove(state, { r: 2, c: 3 }, { r: 2, c: 2 });
+      expect(afterFirstCapture.capturedLastMove).toEqual([{ r: 2, c: 1 }]);
+
+      const afterChainStep = applyChainStep(afterFirstCapture, { r: 3, c: 2 });
+      expect(afterChainStep.capturedLastMove).toEqual([{ r: 4, c: 2 }]);
+      expect(afterChainStep.board[4][2]).toBe(null);
+      expect(afterChainStep.phase).toBe('chain');
     });
   });
 
@@ -191,16 +223,19 @@ describe('Chain Capture Mechanics', () => {
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Dark in center (immune), Dark next to center can be captured
+      // Dark on center (immune) and Dark next to it on the same line:
+      // Light(3,1) - Dark(3,2) - Dark(3,3 center) - [Light moves here](3,4)
       state.board[3][3] = 'Dark'; // Center - immune
       state.board[3][2] = 'Dark'; // Can be captured
       state.board[3][1] = 'Light'; // Bounding piece
-      state.board[3][4] = 'Light'; // Piece to move
+      state.board[2][4] = 'Light'; // Piece to move
 
-      const newState = applyMove(state, { r: 3, c: 4 }, { r: 2, c: 4 });
+      const newState = applyMove(state, { r: 2, c: 4 }, { r: 3, c: 4 });
 
-      // Should not capture either piece (didn't sandwich properly)
-      // Let me fix this test
+      expect(newState.capturedLastMove).toEqual([{ r: 3, c: 2 }]);
+      expect(newState.board[3][3]).toBe('Dark');
+      expect(newState.board[3][2]).toBe(null);
+      expect(newState.phase).toBe('chain');
     });
   });
 });

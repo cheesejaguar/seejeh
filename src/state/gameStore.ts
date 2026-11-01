@@ -625,7 +625,6 @@ export const useGameStore = create<GameStore>((set, get) => ({
         }
 
         // Generate move analysis if enabled
-        const { settings } = get();
         if (settings.moveAnalysisEnabled && aiMove.from && aiMove.to) {
           const analysis = analyzeAIMove(gameState, aiMove, settings.aiDifficulty);
           get().updateAIAnalysis(analysis);

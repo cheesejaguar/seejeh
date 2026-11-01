@@ -21,7 +21,7 @@ describe('Capture Logic', () => {
       state.board[2][2] = 'Light'; // Moved here
 
       const captures = resolveCaptures(state, { r: 2, c: 2 });
-      expect(captures.captured).toContainEqual({ r: 2, c: 1 });
+      expect(captures.captured).toEqual([{ r: 2, c: 1 }]);
     });
 
     it('should capture horizontally to the right', () => {
@@ -34,7 +34,7 @@ describe('Capture Logic', () => {
       state.board[2][4] = 'Light'; // Moved here
 
       const captures = resolveCaptures(state, { r: 2, c: 4 });
-      expect(captures.captured).toContainEqual({ r: 2, c: 3 });
+      expect(captures.captured).toEqual([{ r: 2, c: 3 }]);
     });
 
     it('should capture vertically upward', () => {
@@ -47,7 +47,7 @@ describe('Capture Logic', () => {
       state.board[2][2] = 'Light'; // Moved here
 
       const captures = resolveCaptures(state, { r: 2, c: 2 });
-      expect(captures.captured).toContainEqual({ r: 1, c: 2 });
+      expect(captures.captured).toEqual([{ r: 1, c: 2 }]);
     });
 
     it('should capture vertically downward', () => {
@@ -60,7 +60,7 @@ describe('Capture Logic', () => {
       state.board[4][2] = 'Light';
 
       const captures = resolveCaptures(state, { r: 2, c: 2 });
-      expect(captures.captured).toContainEqual({ r: 3, c: 2 });
+      expect(captures.captured).toEqual([{ r: 3, c: 2 }]);
     });
   });
 
@@ -154,10 +154,10 @@ describe('Capture Logic', () => {
 
       const captures = resolveCaptures(state, { r: 3, c: 5 });
 
-      // Should capture 3,4 but not 3,3 (center)
-      // However, the capture line is broken by the immune center
-      // So actually nothing should be captured because the line isn't bounded
+      // The center stone itself is immune, but it does not break the line:
+      // the stones on either side of it are still captured.
       expect(captures.captured).not.toContainEqual({ r: 3, c: 3 });
+      expect(captures.captured).toEqual([{ r: 3, c: 4 }, { r: 3, c: 2 }]);
     });
 
     it('should allow using center piece to make captures', () => {
@@ -225,7 +225,10 @@ describe('Capture Logic', () => {
       state.board[2][3] = 'Light'; // Piece to move
 
       const preview = previewCaptures(state, { r: 2, c: 3 }, { r: 2, c: 2 });
-      expect(preview).toContainEqual({ r: 2, c: 1 });
+      expect(preview).toEqual([{ r: 2, c: 1 }]);
+      // Previewing must not change the board
+      expect(state.board[2][1]).toBe('Dark');
+      expect(state.board[2][3]).toBe('Light');
     });
 
     it('should preview multi-axis capture correctly', () => {
@@ -241,7 +244,8 @@ describe('Capture Logic', () => {
       state.board[3][2] = 'Light'; // Piece to move
 
       const preview = previewCaptures(state, { r: 3, c: 2 }, { r: 2, c: 2 });
-      expect(preview.length).toBe(2);
+      expect(preview).toHaveLength(2);
+      expect(preview).toEqual(expect.arrayContaining([{ r: 2, c: 1 }, { r: 1, c: 2 }]));
     });
 
     it('should return empty for invalid move', () => {

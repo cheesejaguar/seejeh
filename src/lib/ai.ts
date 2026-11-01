@@ -10,7 +10,6 @@ import {
   checkWin,
   isCenter,
   neighbors,
-  resolveCaptures,
   hasAnyLegalMove
 } from './rules';
 
@@ -364,21 +363,19 @@ export function getBestAIMove(state: GameState, difficulty: AIDifficulty): AIMov
   for (const move of moves) {
     const newState = applyMoveToState(state, move);
     
-    // Evaluate immediate captures first
-    if (move.type === 'movement') {
-      const captures = resolveCaptures(newState, move.to!);
-      if (captures.captured.length > 0) {
-        bestScore += captures.captured.length * config.weights.captures;
-      }
-    }
-    
-    const score = minimax(
+    let score = minimax(
       newState, 
       config.depth - 1, 
       false, 
       state.current, 
       config.weights
     );
+    
+    // Reward immediate captures. applyMove has already removed the captured
+    // stones, so read them from capturedLastMove rather than re-resolving.
+    if (move.type === 'movement') {
+      score += newState.capturedLastMove.length * config.weights.captures;
+    }
     
     if (score > bestScore) {
       bestScore = score;
@@ -413,21 +410,19 @@ export function getOptimalMove(state: GameState): AIMove | null {
   for (const move of moves) {
     const newState = applyMoveToState(state, move);
     
-    // Evaluate immediate captures first
-    if (move.type === 'movement') {
-      const captures = resolveCaptures(newState, move.to!);
-      if (captures.captured.length > 0) {
-        bestScore += captures.captured.length * config.weights.captures;
-      }
-    }
-    
-    const score = minimax(
+    let score = minimax(
       newState, 
       config.depth - 1, 
       false, 
       state.current, 
       config.weights
     );
+    
+    // Reward immediate captures. applyMove has already removed the captured
+    // stones, so read them from capturedLastMove rather than re-resolving.
+    if (move.type === 'movement') {
+      score += newState.capturedLastMove.length * config.weights.captures;
+    }
     
     if (score > bestScore) {
       bestScore = score;
@@ -457,10 +452,10 @@ export function getTopMoves(state: GameState, count: number = 3): Array<{ move: 
     
     // Add immediate capture bonus and description
     if (move.type === 'movement') {
-      const captures = resolveCaptures(newState, move.to!);
-      if (captures.captured.length > 0) {
-        score += captures.captured.length * config.weights.captures;
-        description = `Captures ${captures.captured.length} stone${captures.captured.length > 1 ? 's' : ''}`;
+      const capturedCount = newState.capturedLastMove.length;
+      if (capturedCount > 0) {
+        score += capturedCount * config.weights.captures;
+        description = `Captures ${capturedCount} stone${capturedCount > 1 ? 's' : ''}`;
       } else {
         // Analyze positional benefits
         if (isCenter(move.to!)) {
@@ -617,11 +612,11 @@ export function analyzeAIMove(
   
   // Analyze captures
   if (move.type === 'movement' && move.to) {
-    const captures = resolveCaptures(newState, move.to);
-    factors.captures = captures.captured.length;
+    const capturedCount = newState.capturedLastMove.length;
+    factors.captures = capturedCount;
     
-    if (captures.captured.length > 0) {
-      reasoning.push(`Captures ${captures.captured.length} opponent stone${captures.captured.length > 1 ? 's' : ''}`);
+    if (capturedCount > 0) {
+      reasoning.push(`Captures ${capturedCount} opponent stone${capturedCount > 1 ? 's' : ''}`);
     }
   }
   
