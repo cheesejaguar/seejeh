@@ -140,7 +140,9 @@ describe('Win Conditions', () => {
         current: 'Dark'
       });
       expect(afterDarkOffer.stalemateOffers.Dark).toBe(true);
-      expect(afterDarkOffer.winner).not.toBeUndefined();
+      // 10 stones each, so the agreed stalemate is a draw
+      expect(afterDarkOffer.winner).toBe(null);
+      expect(afterDarkOffer.winReason).toEqual({ type: 'stalemate', drawType: 'mutual' });
     });
 
     it('should determine winner by stone count in stalemate', () => {
@@ -235,50 +237,58 @@ describe('Win Conditions', () => {
   });
 
   describe('No Legal Moves Stalemate', () => {
-    it('should detect when neither player can move', () => {
+    // Fill every cell, alternating colours: Light gets 25 cells, Dark 24
+    const fullBoard = (even: Player, odd: Player) => {
       const state = initialState7x7();
       state.phase = 'movement';
-
-      // Create a fully blocked board
-      // Fill entire board with alternating pieces
       for (let r = 0; r < 7; r++) {
         for (let c = 0; c < 7; c++) {
-          if (r === 3 && c === 3) continue; // Leave center empty
-          state.board[r][c] = (r + c) % 2 === 0 ? 'Light' : 'Dark';
+          state.board[r][c] = (r + c) % 2 === 0 ? even : odd;
         }
       }
+      return state;
+    };
+
+    it('should detect when neither player can move', () => {
+      const state = fullBoard('Light', 'Dark');
+
+      expect(hasAnyLegalMove(state, 'Light')).toBe(false);
+      expect(hasAnyLegalMove(state, 'Dark')).toBe(false);
 
       const stalemate = detectStalemate(state);
-      // With this pattern, players might still have moves to center
-      // Let's verify the logic
-      expect(hasAnyLegalMove(state, 'Light')).toBeDefined();
+      expect(stalemate.winReason).toEqual({ type: 'stalemate', drawType: 'insufficient' });
     });
 
     it('should award victory to player with more stones when both blocked', () => {
+      const lightMajority = detectStalemate(fullBoard('Light', 'Dark'));
+      expect(lightMajority.winner).toBe('Light');
+
+      const darkMajority = detectStalemate(fullBoard('Dark', 'Light'));
+      expect(darkMajority.winner).toBe('Dark');
+    });
+
+    it('should not end the game when only the player on turn is blocked', () => {
       const state = initialState7x7();
       state.phase = 'movement';
+      state.current = 'Light';
 
-      // Create scenario where neither can move
-      // Compact cluster of pieces
+      // Every Light stone is boxed in, but Dark can still move.
+      // Both sides keep more than 7 stones so no other end condition applies.
       state.board[0][0] = 'Light';
       state.board[0][1] = 'Dark';
       state.board[1][0] = 'Dark';
-      state.board[1][1] = 'Light';
-
-      // Add more Light stones elsewhere (blocked)
-      state.board[6][6] = 'Light';
-      state.board[6][5] = 'Dark';
-      state.board[5][6] = 'Dark';
-
-      // If this creates a stalemate scenario
-      const lightMoves = hasAnyLegalMove(state, 'Light');
-      const darkMoves = hasAnyLegalMove(state, 'Dark');
-
-      // Verify the detection works
-      if (!lightMoves && !darkMoves) {
-        const stalemate = detectStalemate(state);
-        expect(stalemate.winner).toBeDefined();
+      for (let c = 0; c < 7; c++) {
+        state.board[6][c] = 'Light';
+        state.board[5][c] = 'Dark';
       }
+
+      expect(hasAnyLegalMove(state, 'Light')).toBe(false);
+      expect(hasAnyLegalMove(state, 'Dark')).toBe(true);
+
+      // This is a blockade for Light, not a mutual stalemate
+      const result = detectStalemate(state);
+      expect(result.winner).toBeUndefined();
+      expect(result.winReason).toBeUndefined();
     });
   });
 

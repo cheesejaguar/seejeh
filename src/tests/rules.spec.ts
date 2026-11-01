@@ -147,6 +147,8 @@ describe('Seejeh Rules Engine', () => {
         { ...state, board: testBoard },
         { r: 1, c: 4 }
       );
+      // (1,4) is empty, so nothing has moved there and nothing is captured
+      expect(captures.captured).toEqual([]);
       
       // Should capture if there's a Light stone at the end
       testBoard[1][4] = 'Light';
@@ -158,6 +160,7 @@ describe('Seejeh Rules Engine', () => {
       expect(capturesWithEnd.captured).toContainEqual({ r: 1, c: 1 });
       expect(capturesWithEnd.captured).toContainEqual({ r: 1, c: 2 });
       expect(capturesWithEnd.captured).toContainEqual({ r: 1, c: 3 });
+      expect(capturesWithEnd.captured).toHaveLength(3);
     });
 
     it('should not capture center stone', () => {
@@ -179,7 +182,7 @@ describe('Seejeh Rules Engine', () => {
         { r: 3, c: 4 }
       );
       
-      expect(capturesWithBound.captured).not.toContainEqual({ r: 3, c: 3 });
+      expect(capturesWithBound.captured).toEqual([]);
     });
 
     it('should handle multi-axis captures', () => {
@@ -205,8 +208,14 @@ describe('Seejeh Rules Engine', () => {
         { r: 3, c: 3 } // Light moved to center
       );
 
-      // Should capture in multiple directions
-      expect(captures.captured.length).toBeGreaterThan(0);
+      // Should capture in all four directions
+      expect(captures.captured).toHaveLength(4);
+      expect(captures.captured).toEqual(expect.arrayContaining([
+        { r: 2, c: 3 },
+        { r: 4, c: 3 },
+        { r: 3, c: 2 },
+        { r: 3, c: 4 }
+      ]));
     });
   });
 
@@ -263,6 +272,16 @@ describe('Seejeh Rules Engine', () => {
       state.current = 'Light';
       
       expect(hasAnyLegalMove(state, 'Light')).toBe(true);
+    });
+
+    it('should report moves for the player who is not on turn', () => {
+      const state = initialState7x7();
+      state.phase = 'movement';
+      state.board[1][1] = 'Light';
+      state.board[5][5] = 'Dark';
+      state.current = 'Light';
+
+      expect(hasAnyLegalMove(state, 'Dark')).toBe(true);
     });
   });
 

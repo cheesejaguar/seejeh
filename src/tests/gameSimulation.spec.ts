@@ -75,28 +75,16 @@ describe('Full Game Simulations', () => {
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Setup: Light at corners, Dark in between
-      state.board[0][0] = 'Light';
-      state.board[0][2] = 'Light';
-      state.board[0][1] = 'Dark';
-      state.board[1][0] = 'Light'; // Piece to move
-
-      // Move Light from (1,0) to (0,0) is not valid (occupied)
-      // Let me create a proper capture scenario
-      state.board[0][0] = null;
-      state.board[1][0] = 'Light';
-      // Now: Light(1,0), Dark(0,1), Light(0,2) - but wrong axis
-
-      // Better setup: horizontal capture
-      // Light(2,0) - Dark(2,1) - [move here](2,2) to capture
+      // Horizontal capture: Light(2,0) - Dark(2,1) - [move here](2,2)
       state.board[2][0] = 'Light';
       state.board[2][1] = 'Dark';
       state.board[2][3] = 'Light';
 
       const afterMove = applyMove(state, { r: 2, c: 3 }, { r: 2, c: 2 });
 
-      expect(afterMove.capturedLastMove).toContainEqual({ r: 2, c: 1 });
+      expect(afterMove.capturedLastMove).toEqual([{ r: 2, c: 1 }]);
       expect(afterMove.board[2][1]).toBe(null);
+      expect(afterMove.board[2][2]).toBe('Light');
     });
 
     it('should simulate multiple turns', () => {
@@ -130,24 +118,37 @@ describe('Full Game Simulations', () => {
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Setup for chain capture:
-      // Row 2: Light(2,0) - Dark(2,1) - [move to](2,2) - Dark(2,3) - Light(2,4)
+      // Filler stones keep both sides above the 7-stone loss threshold
+      for (let c = 0; c < 7; c++) {
+        state.board[6][c] = 'Light';
+        state.board[4][c] = 'Dark';
+      }
+      state.board[5][0] = 'Light';
+      state.board[5][3] = 'Dark';
+      state.board[5][4] = 'Dark';
+
+      // Capture 1: Light(2,0) - Dark(2,1) - [move to](2,2)
       state.board[2][0] = 'Light';
       state.board[2][1] = 'Dark';
-      state.board[2][3] = 'Dark';
-      state.board[2][4] = 'Light';
       state.board[1][2] = 'Light'; // Piece to move
+      // Capture 2, after chain step to (2,3): Light(0,3) - Dark(1,3) - [at](2,3)
+      state.board[0][3] = 'Light';
+      state.board[1][3] = 'Dark';
 
-      // Move 1: Capture first Dark
+      const darkBefore = countStones(state, 'Dark');
+
+      // Move 1: capture first Dark
       state = applyMove(state, { r: 1, c: 2 }, { r: 2, c: 2 });
       expect(state.phase).toBe('chain');
-      expect(state.capturedLastMove).toContainEqual({ r: 2, c: 1 });
+      expect(state.capturedLastMove).toEqual([{ r: 2, c: 1 }]);
 
-      // Chain step: Move to capture second Dark
-      // Now at (2,2), can move to (2,4) - but wait, (2,4) has Light
-      // Actually the chain move should be orthogonal one step
-      // From (2,2) we can go to (2,3) but that has Dark
-      // Let me reconsider the setup...
+      // Chain step: capture second Dark
+      state = applyChainStep(state, { r: 2, c: 3 });
+      expect(state.phase).toBe('chain');
+      expect(state.capturedLastMove).toEqual([{ r: 1, c: 3 }]);
+      expect(state.board[1][3]).toBe(null);
+      expect(countStones(state, 'Dark')).toBe(darkBefore - 2);
+      expect(state.winner).toBeUndefined();
 
       // End the chain
       state = endChain(state);
@@ -177,7 +178,7 @@ describe('Full Game Simulations', () => {
   });
 
   describe('Win Condition Simulation', () => {
-    it('should detect victory during gameplay', () => {
+    it('should not declare victory while opponent keeps 8 stones', () => {
       let state = initialState7x7();
       state.phase = 'movement';
       state.current = 'Light';
@@ -211,8 +212,10 @@ describe('Full Game Simulations', () => {
 
       const afterCapture = applyMove(state, { r: 4, c: 3 }, { r: 4, c: 2 });
 
-      // After capture: Dark should have 8 stones (one captured)
+      // After capture: Dark should have 8 stones (one captured), not yet a loss
+      expect(afterCapture.capturedLastMove).toEqual([{ r: 4, c: 1 }]);
       expect(countStones(afterCapture, 'Dark')).toBe(8);
+      expect(afterCapture.winner).toBeUndefined();
     });
 
     it('should trigger win when opponent reduced to 7 stones', () => {
@@ -243,6 +246,12 @@ describe('Full Game Simulations', () => {
       // After capture, Dark has 7 stones - should trigger win
       expect(countStones(afterCapture, 'Dark')).toBe(7);
       expect(afterCapture.winner).toBe('Light');
+      expect(afterCapture.winReason).toEqual({
+        type: 'stoneCount',
+        loserStoneCount: 7,
+        threshold: 7,
+        loser: 'Dark'
+      });
     });
   });
 
@@ -255,15 +264,16 @@ describe('Full Game Simulations', () => {
       // Dark piece in center
       state.board[3][3] = 'Dark';
 
-      // Try to capture center piece
+      // Light(3,2) - Dark(center) - [Light moves here](3,4)
       state.board[3][2] = 'Light';
-      state.board[3][4] = 'Light';
-      state.board[2][3] = 'Light';
+      state.board[2][4] = 'Light'; // Piece to move
 
-      const afterMove = applyMove(state, { r: 2, c: 3 }, { r: 2, c: 4 });
+      const afterMove = applyMove(state, { r: 2, c: 4 }, { r: 3, c: 4 });
 
       // Center piece should still be there
-      expect(state.board[3][3]).toBe('Dark');
+      expect(afterMove.board[3][3]).toBe('Dark');
+      expect(afterMove.capturedLastMove).toEqual([]);
+      expect(afterMove.phase).toBe('movement');
     });
 
     it('should handle moving between two enemy pieces (safe entry)', () => {
@@ -289,46 +299,25 @@ describe('Full Game Simulations', () => {
       state.phase = 'movement';
       state.current = 'Light';
 
-      // Cross pattern capture
-      // Light(1,3) moves to center(3,3) to capture Dark pieces on all sides
-      state.board[2][3] = 'Dark';
+      // Light at (2,3) moves into the center and closes three lines at once:
+      // down to Light(5,3), left to Light(3,1), right to Light(3,5)
+      state.board[2][3] = 'Light'; // Piece to move
       state.board[4][3] = 'Dark';
       state.board[3][2] = 'Dark';
       state.board[3][4] = 'Dark';
-
-      // Bounding Light pieces
-      state.board[1][3] = 'Light';
       state.board[5][3] = 'Light';
       state.board[3][1] = 'Light';
       state.board[3][5] = 'Light';
 
-      // Piece to move to center
-      state.board[2][3] = null; // Remove dark here for now
-      state.board[2][3] = 'Light'; // Temporarily
-      state.board[1][3] = null;
+      const afterMove = applyMove(state, { r: 2, c: 3 }, { r: 3, c: 3 });
 
-      // Reset and properly setup
-      const state2 = initialState7x7();
-      state2.phase = 'movement';
-      state2.current = 'Light';
-
-      state2.board[2][3] = 'Dark';
-      state2.board[4][3] = 'Dark';
-      state2.board[3][2] = 'Dark';
-      state2.board[3][4] = 'Dark';
-
-      state2.board[1][3] = 'Light';
-      state2.board[5][3] = 'Light';
-      state2.board[3][1] = 'Light';
-      state2.board[3][5] = 'Light';
-      state2.board[3][3] = null; // Center empty
-      state2.board[2][3] = null; // Make room for Light to move there
-      state2.board[2][3] = 'Light'; // Piece adjacent to center
-
-      const afterMove = applyMove(state2, { r: 2, c: 3 }, { r: 3, c: 3 });
-
-      // Should have captured pieces in multiple directions
-      expect(afterMove.capturedLastMove.length).toBeGreaterThanOrEqual(0);
+      expect(afterMove.capturedLastMove).toHaveLength(3);
+      expect(afterMove.capturedLastMove).toEqual(expect.arrayContaining([
+        { r: 4, c: 3 },
+        { r: 3, c: 2 },
+        { r: 3, c: 4 }
+      ]));
+      expect(countStones(afterMove, 'Dark')).toBe(0);
     });
   });
 

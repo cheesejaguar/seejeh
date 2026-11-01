@@ -17,9 +17,8 @@ describe('AI Chain Capture Handling', () => {
       const move = getBestAIMove(state, 'medium');
 
       expect(move).not.toBeNull();
-      if (move) {
-        expect(move.from).toEqual({ r: 2, c: 2 });
-      }
+      expect(move!.type).toBe('movement');
+      expect(move!.from).toEqual({ r: 2, c: 2 });
     });
 
     it('should not generate moves from other pieces in chain phase', () => {
@@ -33,9 +32,8 @@ describe('AI Chain Capture Handling', () => {
       const move = getBestAIMove(state, 'hard');
 
       // Move should only come from chainOrigin
-      if (move && move.from) {
-        expect(move.from).toEqual({ r: 2, c: 2 });
-      }
+      expect(move).not.toBeNull();
+      expect(move!.from).toEqual({ r: 2, c: 2 });
     });
   });
 
@@ -57,6 +55,8 @@ describe('AI Chain Capture Handling', () => {
 
       // AI should choose the capturing move
       expect(move).not.toBeNull();
+      expect(move!.from).toEqual({ r: 2, c: 3 });
+      expect(move!.to).toEqual({ r: 2, c: 2 });
     });
 
     it('should evaluate capture value at higher difficulties', () => {
@@ -76,55 +76,40 @@ describe('AI Chain Capture Handling', () => {
 
       const topMoves = getTopMoves(state, 5);
 
-      expect(topMoves.length).toBeGreaterThan(0);
+      expect(topMoves).toHaveLength(5);
+      // The double capture ranks first, the single capture second
+      expect(topMoves[0].move.from).toEqual({ r: 2, c: 4 });
+      expect(topMoves[0].move.to).toEqual({ r: 2, c: 3 });
+      expect(topMoves[0].description).toBe('Captures 2 stones');
+      expect(topMoves[1].move.from).toEqual({ r: 4, c: 3 });
+      expect(topMoves[1].move.to).toEqual({ r: 4, c: 2 });
+      expect(topMoves[1].description).toBe('Captures 1 stone');
+      expect(topMoves[0].score).toBeGreaterThan(topMoves[1].score);
     });
   });
 
   describe('AI Difficulty Levels', () => {
-    it('should make valid moves at beginner level', () => {
-      const state = initialState7x7();
-      state.phase = 'movement';
-      state.current = 'Light';
-      state.board[3][3] = 'Light';
+    const difficulties: AIDifficulty[] = ['beginner', 'easy', 'medium', 'hard'];
 
-      const move = getBestAIMove(state, 'beginner');
+    for (const difficulty of difficulties) {
+      it(`should make valid moves at ${difficulty} level`, () => {
+        const state = initialState7x7();
+        state.phase = 'movement';
+        state.current = 'Light';
+        state.board[3][3] = 'Light';
 
-      expect(move).not.toBeNull();
-      expect(move?.type).toBe('movement');
-    });
+        const move = getBestAIMove(state, difficulty);
 
-    it('should make valid moves at easy level', () => {
-      const state = initialState7x7();
-      state.phase = 'movement';
-      state.current = 'Light';
-      state.board[3][3] = 'Light';
-
-      const move = getBestAIMove(state, 'easy');
-
-      expect(move).not.toBeNull();
-    });
-
-    it('should make valid moves at medium level', () => {
-      const state = initialState7x7();
-      state.phase = 'movement';
-      state.current = 'Light';
-      state.board[3][3] = 'Light';
-
-      const move = getBestAIMove(state, 'medium');
-
-      expect(move).not.toBeNull();
-    });
-
-    it('should make valid moves at hard level', () => {
-      const state = initialState7x7();
-      state.phase = 'movement';
-      state.current = 'Light';
-      state.board[3][3] = 'Light';
-
-      const move = getBestAIMove(state, 'hard');
-
-      expect(move).not.toBeNull();
-    });
+        expect(move).not.toBeNull();
+        expect(move!.type).toBe('movement');
+        expect(move!.from).toEqual({ r: 3, c: 3 });
+        expect([
+          { r: 2, c: 3 }, { r: 4, c: 3 }, { r: 3, c: 2 }, { r: 3, c: 4 }
+        ]).toContainEqual(move!.to);
+        // The move must be accepted by the rules engine
+        expect(applyMove(state, move!.from!, move!.to!).board[move!.to!.r][move!.to!.c]).toBe('Light');
+      });
+    }
   });
 
   describe('AI Move Analysis', () => {
@@ -137,10 +122,16 @@ describe('AI Chain Capture Handling', () => {
 
       const topMoves = getTopMoves(state, 3);
 
-      expect(topMoves.length).toBeGreaterThan(0);
-      for (const move of topMoves) {
-        expect(move.description).toBeDefined();
-        expect(move.move).toBeDefined();
+      // Two free stones in open space have 8 legal moves; ask for the top 3
+      expect(topMoves).toHaveLength(3);
+      for (const { move, description } of topMoves) {
+        expect(['Secure center position', 'Improves mobility', 'Strengthens position']).toContain(description);
+        expect(move.type).toBe('movement');
+        expect([{ r: 2, c: 2 }, { r: 4, c: 4 }]).toContainEqual(move.from);
+      }
+      // Sorted best-first
+      for (let i = 1; i < topMoves.length; i++) {
+        expect(topMoves[i - 1].score).toBeGreaterThanOrEqual(topMoves[i].score);
       }
     });
   });
@@ -152,15 +143,11 @@ describe('AI Chain Capture Handling', () => {
       const move = getBestAIMove(state, 'medium');
 
       expect(move).not.toBeNull();
-      expect(move?.type).toBe('placement');
-      expect(move?.cells).toBeDefined();
-      expect(move?.cells.length).toBe(1);
+      expect(move!.type).toBe('placement');
+      expect(move!.cells).toHaveLength(1);
 
       // Should not place in center
-      const cell = move?.cells[0];
-      if (cell) {
-        expect(cell.r !== 3 || cell.c !== 3).toBe(true);
-      }
+      expect(move!.cells[0]).not.toEqual({ r: 3, c: 3 });
     });
 
     it('should handle second stone placement', () => {
@@ -172,7 +159,11 @@ describe('AI Chain Capture Handling', () => {
       const move = getBestAIMove(state, 'medium');
 
       expect(move).not.toBeNull();
-      expect(move?.type).toBe('placement');
+      expect(move!.type).toBe('placement');
+      expect(move!.cells).toHaveLength(1);
+      const cell = move!.cells[0];
+      expect(cell).not.toEqual({ r: 0, c: 0 }); // already occupied
+      expect(cell).not.toEqual({ r: 3, c: 3 });
     });
   });
 
@@ -206,9 +197,8 @@ describe('AI Chain Capture Handling', () => {
       const move = getBestAIMove(state, 'medium');
 
       // Should still return a valid move (even without captures)
-      if (move) {
-        expect(move.from).toEqual({ r: 3, c: 3 });
-      }
+      expect(move).not.toBeNull();
+      expect(move!.from).toEqual({ r: 3, c: 3 });
     });
   });
 });

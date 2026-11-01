@@ -75,51 +75,53 @@ describe('Game Variants', () => {
       });
       state.phase = 'movement';
       state.board[1][1] = 'Light';
+      state.board[5][5] = 'Dark';
       state.current = 'Light';
 
-      // Move back and forth multiple times
+      // Both players shuttle back and forth twice, then Light goes again
+      const A = { r: 1, c: 1 }, B = { r: 1, c: 2 };
+      const C = { r: 5, c: 5 }, D = { r: 5, c: 6 };
       let currentState = state;
-      for (let i = 0; i < 4; i++) {
-        if (i % 2 === 0) {
-          currentState = applyMove(currentState, { r: 1, c: 1 }, { r: 1, c: 2 });
-          currentState.board[1][2] = 'Light';
-          currentState.board[1][1] = null;
-        } else {
-          currentState = applyMove(currentState, { r: 1, c: 2 }, { r: 1, c: 1 });
-          currentState.board[1][1] = 'Light';
-          currentState.board[1][2] = null;
-        }
-        currentState.current = 'Light';
+      for (let i = 0; i < 2; i++) {
+        currentState = applyMove(currentState, A, B);
+        currentState = applyMove(currentState, C, D);
+        currentState = applyMove(currentState, B, A);
+        currentState = applyMove(currentState, D, C);
       }
+
       // Should not throw
-      expect(currentState.board[1][1]).toBeDefined();
+      const after = applyMove(currentState, A, B);
+      expect(after.board[1][2]).toBe('Light');
+      expect(after.board[1][1]).toBe(null);
+      expect(after.moveHistory).toHaveLength(9);
     });
 
-    it('should block repetitive shuttle when enabled', () => {
+    // Bug: rules.ts identifies a piece by its *current* square (pieceId = "r,c" of
+    // `from`) and then requires recentMoves[even].from to equal the destination.
+    // Every move filtered by that pieceId starts at `from`, never at `to`, so the
+    // shuttle check can never match and the variant is a no-op.
+    it.fails('should block repetitive shuttle when enabled', () => {
       const state = initialState7x7({
         antiShuttle: true
       });
       state.phase = 'movement';
       state.board[1][1] = 'Light';
+      state.board[5][5] = 'Dark';
       state.current = 'Light';
 
-      // Note: The anti-shuttle rule uses pieceId based on starting position,
-      // so we need all moves to have the same from position to trigger the rule
-      // This simulates a scenario where the same position is being shuttled from
-      state.moveHistory = [
-        { pieceId: '1,1', from: { r: 1, c: 1 }, to: { r: 1, c: 2 }, timestamp: 1 },
-        { pieceId: '1,1', from: { r: 1, c: 1 }, to: { r: 1, c: 2 }, timestamp: 2 },
-        { pieceId: '1,1', from: { r: 1, c: 1 }, to: { r: 1, c: 2 }, timestamp: 3 },
-        { pieceId: '1,1', from: { r: 1, c: 1 }, to: { r: 1, c: 2 }, timestamp: 4 },
-      ];
+      // Both players shuttle back and forth twice through real turns
+      const A = { r: 1, c: 1 }, B = { r: 1, c: 2 };
+      const C = { r: 5, c: 5 }, D = { r: 5, c: 6 };
+      let currentState = state;
+      for (let i = 0; i < 2; i++) {
+        currentState = applyMove(currentState, A, B);
+        currentState = applyMove(currentState, C, D);
+        currentState = applyMove(currentState, B, A);
+        currentState = applyMove(currentState, D, C);
+      }
 
-      // The anti-shuttle rule checks a specific pattern
-      // After 4 recorded moves from this position, another move should trigger the rule
-      const move = applyMove(state, { r: 1, c: 1 }, { r: 1, c: 2 });
-
-      // Currently the implementation has limited shuttle detection
-      // This test verifies the move completes (future enhancement could strengthen this)
-      expect(move.board[1][2]).toBe('Light');
+      // A fifth shuttle step by the same Light stone should be rejected
+      expect(() => applyMove(currentState, A, B)).toThrow('Anti-shuttle rule prevents this move');
     });
 
     it('should allow movement of different pieces', () => {

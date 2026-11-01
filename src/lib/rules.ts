@@ -398,10 +398,12 @@ export function hasAnyLegalMove(state: GameState, player: Player): boolean {
     return placementsFor(state, player).length > 0;
   }
   
+  // Check the board directly rather than via movesFor, which only reports
+  // moves for state.current and would always say the other player is stuck.
   for (let r = 0; r < BOARD_SIZE; r++) {
     for (let c = 0; c < BOARD_SIZE; c++) {
       if (state.board[r][c] === player) {
-        if (movesFor(state, { r, c }).length > 0) {
+        if (neighbors({ r, c }).some(n => state.board[n.r][n.c] === null)) {
           return true;
         }
       }

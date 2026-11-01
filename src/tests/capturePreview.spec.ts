@@ -1,50 +1,43 @@
 // FILE: src/tests/capturePreview.spec.ts
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
+import { loadSettings, saveSettings } from '../lib/serialize';
+import { useGameStore } from '../state/gameStore';
 import { GameSettings } from '../lib/types';
 
 describe('Capture Preview Setting', () => {
-  it('should have default value true for new settings', () => {
-    const defaultSettings: GameSettings = {
-      language: 'en',
-      aiDifficulty: 'beginner',
-      players: {
-        Light: { type: 'human' },
-        Dark: { type: 'ai', difficulty: 'beginner' }
-      },
-      variant: {
-        firstMoveMustEnterCenter: false,
-        antiShuttle: false,
-        blockadeOneRemoval: true
-      },
-      hintsEnabled: false,
-      soundEnabled: true,
-      soundVolume: 0.5,
-      capturePreviewsEnabled: true
-    };
+  beforeEach(() => {
+    localStorage.clear();
+  });
 
-    expect(defaultSettings.capturePreviewsEnabled).toBe(true);
+  it('should have default value true for new settings', () => {
+    // Fresh install: nothing saved, the store falls back to its defaults
+    expect(loadSettings()).toBeNull();
+    expect(useGameStore.getState().settings.capturePreviewsEnabled).toBe(true);
+  });
+
+  it('should default to true when migrating settings saved before the option existed', () => {
+    const legacy = { ...useGameStore.getState().settings } as Partial<GameSettings>;
+    delete legacy.capturePreviewsEnabled;
+    localStorage.setItem('seejeh-settings', JSON.stringify(legacy));
+
+    expect(loadSettings()?.capturePreviewsEnabled).toBe(true);
   });
 
   it('should support disabling capture previews', () => {
-    const settings: GameSettings = {
-      language: 'en',
-      aiDifficulty: 'beginner',
-      players: {
-        Light: { type: 'human' },
-        Dark: { type: 'ai', difficulty: 'beginner' }
-      },
-      variant: {
-        firstMoveMustEnterCenter: false,
-        antiShuttle: false,
-        blockadeOneRemoval: true
-      },
-      hintsEnabled: false,
-      soundEnabled: true,
-      soundVolume: 0.5,
-      capturePreviewsEnabled: false
-    };
+    useGameStore.getState().setCapturePreviewsEnabled(false);
 
-    expect(settings.capturePreviewsEnabled).toBe(false);
+    expect(useGameStore.getState().settings.capturePreviewsEnabled).toBe(false);
+    // The choice is persisted
+    expect(loadSettings()?.capturePreviewsEnabled).toBe(false);
+
+    useGameStore.getState().setCapturePreviewsEnabled(true);
+    expect(loadSettings()?.capturePreviewsEnabled).toBe(true);
+  });
+
+  it('should keep an explicitly saved false value', () => {
+    saveSettings({ ...useGameStore.getState().settings, capturePreviewsEnabled: false });
+
+    expect(loadSettings()?.capturePreviewsEnabled).toBe(false);
   });
 });
